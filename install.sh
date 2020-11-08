@@ -94,11 +94,32 @@ else
    virtual=""
 fi
 if [ $distro = "debian" ]; then
-
+   pacman -S debootstrap
+   #*
 elif [ $distro = "fedora" ]; then
-
+   chmod 777 ./
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
+   cd ../
+   su nobody -c "git clone https://aur.archlinux.org/dnf.git"
+   cd dnf
+   su nobody -c "makepkg -si --noconfirm"
+   cd ../
+   rm -r dnf
+   cd linux-installer
+   #*
 elif [ $distro = "void" ]; then
-
+   chmod 777 ./
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
+   cd ../
+   su nobody -c "git clone https://aur.archlinux.org/xbps.git"
+   cd xbps
+   su nobody -c "makepkg -si --noconfirm"
+   cd ../
+   rm -r xpbs
+   cd linux-installer
+   #*
 else
    pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
