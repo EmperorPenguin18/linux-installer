@@ -23,6 +23,7 @@ host=$(read -p "What will the hostname of this computer be? >")
 rpass=$(read -p "Enter the root password. >")
 user=$(read -p "Enter your username. >")
 upass=$(read -p "Enter your user password. >")
+#*Automate prompts*
 
 #Set system time
 timedatectl set-ntp true
