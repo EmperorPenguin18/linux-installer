@@ -1,9 +1,22 @@
 # linux-installer
 Universal GNU+Linux installer script
 
-Support for Arch, Debian buster, Fedora 33, and Void included. Goal is to support as much hardware as possible. Made to work how I like things so if you want it to do something else fork away.
+Support for Arch, Debian buster, Fedora 33, and Void included. These distros are chosen because they each have a unique package manager. Goal is to support as much hardware as possible. Made to work how I like things so if you want it to do something else fork away.
 
 Features:
+- GPT + EFI booting
+- Choice of yes/no swap (sized for hibernate support)
+- BTRFS filesystem with subvolumes and fstab configured
+- SATA and NVMe drives
+- Install multiple distros from one iso
+- AMD and Intel cpus
+- Support for being installed inside a VM
+- SSDs and HDDs
+- GRUB as bootloader
+- Full encrypted disk
+- Performance kernels used instead of standard ones
+- doas used instead of sudo because I don't need that much permission management
+
 
 How to use:
 1. Must be run from an Arch system (Live or no), with only one drive plugged in (other than install usb)
