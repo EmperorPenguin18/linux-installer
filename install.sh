@@ -93,7 +93,7 @@ elif [ $distro = "fedora" ]; then
 elif [ $distro = "void" ]; then
 
 else
-   pacstrap /mnt base linux linux-firmware linux-headers sudo grub grub-btrfs efibootmgr dosfstools os-prober mtools btrfs-progs $(echo $cpu)-ucode networkmanager git
+   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode sudo networkmanager git
 fi
 #*doas*
 #*VM support*
