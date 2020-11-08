@@ -63,13 +63,11 @@ fi
 mount /dev/$(echo $DISKNAME)2 /mnt
 
 #BTRFS subvolumes
-cd /mnt
-btrfs subvolume create _active
-btrfs subvolume create _active/rootvol
-btrfs subvolume create _active/homevol
-btrfs subvolume create _active/tmp
-btrfs subvolume create _snapshots
-cd /root/LinuxConfigs
+btrfs subvolume create /mnt/_active
+btrfs subvolume create /mnt/_active/rootvol
+btrfs subvolume create /mnt/_active/homevol
+btrfs subvolume create /mnt/_active/tmp
+btrfs subvolume create /mnt/_snapshots
 
 #Mount subvolumes for install
 umount /mnt
