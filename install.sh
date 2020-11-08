@@ -146,7 +146,7 @@ arch-chroot /mnt echo $rpass | chpasswd --stdin
 arch-chroot /mnt useradd -m $user
 arch-chroot /mnt echo $upass | chpasswd --stdin $user
 arch-chroot /mnt usermod -aG audio,video,optical,storage $user
-arch-chroot /mnt echo "permit persist :$(echo $user)" > /etc/doas.conf
+arch-chroot /mnt echo "permit persist $user" > /etc/doas.conf
 
 #Create bootloader
 arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
