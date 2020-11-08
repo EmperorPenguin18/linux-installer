@@ -16,7 +16,7 @@ fi
 swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
 distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
 cpu=$(read -p "What brand of cpu do you have? Default is AMD. [amd/intel] ")
-virtual=$(read -p "Is this being installed inside VirtualBox? [y/N] ")
+virtual=$(read -p "Is this being installed inside a virtual machine? [y/N] ")
 drive=$(read -p "Is this being installed on a HDD or a SSD? Default is SSD. [ssd/hdd] ")
 time=$(read -p "Choose a timezone (eg America/Toronto). >")
 host=$(read -p "What will the hostname of this computer be? >")
@@ -86,6 +86,7 @@ reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mir
 pacman -Sy
 
 #Install packages
+if [ $virtual = "y" ]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms qemu-guest-agent"; else virtual=""; fi
 if [ $distro = "debian" ]; then
 
 elif [ $distro = "fedora" ]; then
@@ -93,10 +94,9 @@ elif [ $distro = "fedora" ]; then
 elif [ $distro = "void" ]; then
 
 else
-   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode sudo networkmanager git
+   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode sudo networkmanager git $virtual
 fi
 #*doas*
-#*VM support*
 #*Distro*
 
 #Generate FSTAB
