@@ -13,6 +13,10 @@ if [ $(lsblk | wc -l) -gt 3 ]; then
 fi
 
 #Prompts
+echo "-------------------------------------------------"
+echo "           Welcome to linux-installer!           "
+echo "-------------------------------------------------"
+echo "Please answer the following questions to begin:"
 swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
 distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
 time=$(read -p "Choose a timezone (eg America/Toronto). >")
