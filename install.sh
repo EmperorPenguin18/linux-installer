@@ -7,7 +7,7 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    echo "This is not an Arch system"
    exit 1
 fi
-if [ $(lsblk | wc -l) -gt 3 ]; then
+if [ $(lsblk | wc -l) -gt 4 ]; then
    echo "Drives aren't set up right"
    exit 1
 fi
