@@ -137,7 +137,7 @@ echo "LANG=en_CA.UTF-8" > /mnt/etc/locale.conf
 echo $host > /mnt/etc/hostname
 echo "127.0.0.1   localhost" > /mnt/etc/hosts
 echo "::1   localhost" >> /mnt/etc/hosts
-echo "127.0.1.1   Sebs-PC.localdomain  $host" >> /mnt/etc/hosts
+echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
