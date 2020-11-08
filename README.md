@@ -19,8 +19,9 @@ Features:
 
 
 How to use:
-1. Must be run from an Arch system (Live or no), with only one drive plugged in (other than install usb)
-2. Make script executable (chmod +x) and run with ./install.sh
-3. Answer prompts. Not designed to be user friendly, just covers the basics
-4. Wait for installation to complete
-5. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
+1. Must be run from an Arch live iso.
+2. The only drives connected must be the usb and the target drive with no partitions
+3. Make script executable (chmod +x) and run with ./install.sh
+4. Answer prompts. Not designed to be user friendly, just covers the basics
+5. Wait for installation to complete
+6. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
