@@ -94,9 +94,8 @@ elif [ $distro = "fedora" ]; then
 elif [ $distro = "void" ]; then
 
 else
-   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode sudo networkmanager git $virtual
+   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
-#*doas*
 #*Distro*
 
 #Generate FSTAB
@@ -146,8 +145,8 @@ arch-chroot /mnt echo $rpass | chpasswd --stdin
 #Create user
 arch-chroot /mnt useradd -m $user
 arch-chroot /mnt echo $upass | chpasswd --stdin $user
-arch-chroot /mnt usermod -aG wheel,audio,video,optical,storage $user
-arch-chroot /mnt echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
+arch-chroot /mnt usermod -aG audio,video,optical,storage $user
+arch-chroot /mnt echo "permit persist :$(echo $user)" > /etc/doas.conf
 
 #Create bootloader
 arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
