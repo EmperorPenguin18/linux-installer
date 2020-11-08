@@ -10,7 +10,7 @@ Features:
 - SATA and NVMe drives
 - Install multiple distros from one iso
 - AMD and Intel CPUs
-- Support for being installed inside a VM
+- Support for being installed inside VirtualBox and KVM/QEMU
 - SSDs and HDDs
 - GRUB as bootloader
 - Full encrypted disk
