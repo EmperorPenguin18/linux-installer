@@ -97,7 +97,7 @@ if [ $distro = "debian" ]; then
    pacman -S debootstrap
    #*
 elif [ $distro = "fedora" ]; then
-   chmod 777 ./
+   chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
    cd ../
@@ -109,7 +109,7 @@ elif [ $distro = "fedora" ]; then
    cd linux-installer
    #*
 elif [ $distro = "void" ]; then
-   chmod 777 ./
+   chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
    cd ../
