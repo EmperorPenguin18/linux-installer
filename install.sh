@@ -15,15 +15,11 @@ fi
 #Prompts
 swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
 distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
-cpu=$(read -p "What brand of cpu do you have? Default is AMD. [amd/intel] ")
-virtual=$(read -p "Is this being installed inside a virtual machine? [y/N] ")
-drive=$(read -p "Is this being installed on a HDD or a SSD? Default is SSD. [ssd/hdd] ")
 time=$(read -p "Choose a timezone (eg America/Toronto). >")
 host=$(read -p "What will the hostname of this computer be? >")
 rpass=$(read -p "Enter the root password. >")
 user=$(read -p "Enter your username. >")
 upass=$(read -p "Enter your user password. >")
-#*Automate prompts*
 
 #Set system time
 timedatectl set-ntp true
@@ -86,7 +82,15 @@ reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mir
 pacman -Sy
 
 #Install packages
-if [ $virtual = "y" ]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms qemu-guest-agent"; else virtual=""; fi
+if [ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]; then cpu="intel"; else cpu="amd"; fi
+virtual=$(dmidecode -s system-product-name)
+if [ $virtual = "VirtualBox" ]; then
+   virtual="virtualbox-guest-utils virtualbox-guest-dkms"
+elif [ $virtual = "KVM" ]; then
+   virtual="qemu-guest-agent"
+else
+   virtual=""
+fi
 if [ $distro = "debian" ]; then
 
 elif [ $distro = "fedora" ]; then
@@ -94,7 +98,7 @@ elif [ $distro = "fedora" ]; then
 elif [ $distro = "void" ]; then
 
 else
-   pacstrap /mnt base linux linux-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
+   pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
 #*Distro*
 
@@ -106,7 +110,7 @@ if [ $swap != "n" ]; then
    echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
 fi
 echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 >> /mnt/etc/fstab
-if [ $disk = "hdd" ]; then
+if [ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]; then
    echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
    echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
    echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
@@ -128,9 +132,9 @@ arch-chroot /mnt mkinitcpio -P
 #Set localization stuff
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
-echo "en_CA.UTF-8 UTF-8" > /mnt/etc/locale.gen
+echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
-echo "LANG=en_CA.UTF-8" > /mnt/etc/locale.conf
+echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
 echo $host > /mnt/etc/hostname
