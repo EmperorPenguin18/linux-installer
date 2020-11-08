@@ -21,9 +21,9 @@ swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
 distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
 time=$(read -p "Choose a timezone (eg America/Toronto). >")
 host=$(read -p "What will the hostname of this computer be? >")
-rpass=$(read -p "Enter the root password. >")
+rpass=$(read -s -p "Enter the root password. >")
 user=$(read -p "Enter your username. >")
-upass=$(read -p "Enter your user password. >")
+upass=$(read -s -p "Enter your user password. >")
 
 #Set system time
 timedatectl set-ntp true
@@ -63,11 +63,14 @@ fi
 mount /dev/$(echo $DISKNAME)2 /mnt
 
 #BTRFS subvolumes
+path=$(pwd)
+cd /mnt
 btrfs subvolume create /mnt/_active
 btrfs subvolume create /mnt/_active/rootvol
 btrfs subvolume create /mnt/_active/homevol
 btrfs subvolume create /mnt/_active/tmp
 btrfs subvolume create /mnt/_snapshots
+cd $path
 
 #Mount subvolumes for install
 umount /mnt
