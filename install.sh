@@ -1,8 +1,28 @@
-#Check if script has root privileges
+#Checks before starting
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
    exit 1
 fi
+if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
+   echo "This is not an Arch system"
+   exit 1
+fi
+if [ $(lsblk | wc -l) -gt 3 ]; then
+   echo "Drives aren't set up right"
+   exit 1
+fi
+
+#Prompts
+swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
+distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
+cpu=$(read -p "What brand of cpu do you have? Default is AMD. [amd/intel] ")
+virtual=$(read -p "Is this being installed inside VirtualBox? [y/N] ")
+drive=$(read -p "Is this being installed on a HDD or a SSD? Default is SSD. [ssd/hdd] ")
+time=$(read -p "Choose a timezone (eg America/Toronto). >")
+host=$(read -p "What will the hostname of this computer be? >")
+rpass=$(read -p "Enter the root password. >")
+user=$(read -p "Enter your username. >")
+upass=$(read -p "Enter your user password. >")
 
 #Set system time
 timedatectl set-ntp true
@@ -12,12 +32,20 @@ pacman -S dmidecode --noconfirm
 DISKNAME=$(lsblk | grep disk | awk '{print $1;}')
 DISKSIZE=$(lsblk --output SIZE -n -d /dev/$DISKNAME | sed 's/.$//')
 MEMSIZE=$(dmidecode -t 17 | grep "Size.*MB" | awk '{s+=$2} END {print s / 1024}')
-parted --script /dev/$DISKNAME \
-   mklabel gpt \
-   mkpart P1 fat32 1MB 261MB \
-   set 1 esp on \
-   mkpart P2 btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)GB \
-   mkpart P3 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
+if [ $swap = "n" ]; then
+   parted --script /dev/$DISKNAME \
+      mklabel gpt \
+      mkpart P1 fat32 1MB 261MB \
+      set 1 esp on \
+      mkpart P2 btrfs 261MB $(echo $DISKSIZE)GB \
+else
+   parted --script /dev/$DISKNAME \
+      mklabel gpt \
+      mkpart P1 fat32 1MB 261MB \
+      set 1 esp on \
+      mkpart P2 btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)GB \
+      mkpart P3 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
+fi
 if [ $(echo $DISKNAME | head -c 2 ) = "sd" ]; then
    DISKNAME=$DISKNAME
 else
@@ -27,8 +55,10 @@ fi
 #Format partitions
 mkfs.fat -F32 /dev/$(echo $DISKNAME)1
 mkfs.btrfs -L arch /dev/$(echo $DISKNAME)2
-mkswap /dev/$(echo $DISKNAME)3
-swapon /dev/$(echo $DISKNAME)3
+if [ $swap != "n" ]; then
+   mkswap /dev/$(echo $DISKNAME)3
+   swapon /dev/$(echo $DISKNAME)3
+fi
 mount /dev/$(echo $DISKNAME)2 /mnt
 
 #BTRFS subvolumes
@@ -52,23 +82,41 @@ mount -o subvol=_active/homevol /dev/$(echo $DISKNAME)2 /mnt/home
 #Configure mirrors
 pacman -S reflector --noconfirm
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+pacman -Sy
 
 #Install packages
-pacman -Sy
-pacstrap /mnt base linux linux-firmware linux-headers sudo vim grub grub-btrfs efibootmgr dosfstools os-prober mtools parted reflector btrfs-progs amd-ucode intel-ucode dmidecode networkmanager git
+if [ $distro = "debian" ]; then
+
+elif [ $distro = "fedora" ]; then
+
+elif [ $distro = "void" ]; then
+
+else
+   pacstrap /mnt base linux linux-firmware linux-headers sudo grub grub-btrfs efibootmgr dosfstools os-prober mtools btrfs-progs $(echo $cpu)-ucode networkmanager git
+fi
 #*doas*
 #*VM support*
+#*Distro*
 
 #Generate FSTAB
-UUID1=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
-UUID2=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
-UUID3=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
-echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+UUID1=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
+UUID2=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
+if [ $swap != "n" ]; then
+   UUID3=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
+   echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
+fi
 echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 >> /mnt/etc/fstab
-echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
-echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
-echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
-echo UUID=$UUID2 /home/sebastien/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+if [ $disk = "hdd" ]; then
+   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+else
+   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+fi
 
 #Add btrfs to HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
@@ -78,26 +126,26 @@ echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)
 arch-chroot /mnt mkinitcpio -P
 
 #Set localization stuff
-ln -sf /mnt/usr/share/zoneinfo/America/Toronto /mnt/etc/localtime
+ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
 echo "en_CA.UTF-8 UTF-8" > /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=en_CA.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
-echo "Sebs-PC" > /mnt/etc/hostname
+echo $host > /mnt/etc/hostname
 echo "127.0.0.1   localhost" > /mnt/etc/hosts
 echo "::1   localhost" >> /mnt/etc/hosts
-echo "127.0.1.1   Sebs-PC.localdomain  Sebs-PC" >> /mnt/etc/hosts
+echo "127.0.1.1   Sebs-PC.localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-arch-chroot /mnt passwd
+arch-chroot /mnt echo $rpass | chpasswd --stdin
 
 #Create user
-arch-chroot /mnt useradd -m sebastien
-arch-chroot /mnt passwd sebastien
-arch-chroot /mnt usermod -aG wheel,audio,video,optical,storage sebastien
+arch-chroot /mnt useradd -m $user
+arch-chroot /mnt echo $upass | chpasswd --stdin $user
+arch-chroot /mnt usermod -aG wheel,audio,video,optical,storage $user
 arch-chroot /mnt echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
 #Create bootloader
