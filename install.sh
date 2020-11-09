@@ -173,11 +173,10 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-arch-chroot /mnt printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
+arch-chroot /mnt printf "$rpass\n$rpass\n" | chroot /mnt passwd
 
 #Create user
-arch-chroot /mnt useradd -m -G audio,video,optical,storage $user
-arch-chroot /mnt printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+arch-chroot /mnt useradd -m -G audio,video,optical,storage -p $upass $user
 arch-chroot /mnt echo "permit persist $user" > /etc/doas.conf
 
 #Create bootloader
