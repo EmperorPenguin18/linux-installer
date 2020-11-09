@@ -65,11 +65,11 @@ mount /dev/$(echo $DISKNAME)2 /mnt
 #BTRFS subvolumes
 path=$(pwd)
 cd /mnt
-btrfs subvolume create /mnt/_active
-btrfs subvolume create /mnt/_active/rootvol
-btrfs subvolume create /mnt/_active/homevol
-btrfs subvolume create /mnt/_active/tmp
-btrfs subvolume create /mnt/_snapshots
+btrfs subvolume create _active
+btrfs subvolume create _active/rootvol
+btrfs subvolume create _active/homevol
+btrfs subvolume create _active/tmp
+btrfs subvolume create _snapshots
 cd $path
 
 #Mount subvolumes for install
