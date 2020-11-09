@@ -19,14 +19,14 @@ echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
-swap=$(read -p "Do you want hibernation enabled (Swap partition) [Y/n] ")
-distro=$(read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] ")
-time=$(read -p "Choose a timezone (eg America/Toronto). >")
-host=$(read -p "What will the hostname of this computer be? >")
-rpass=$(read -s -p "Enter the root password. >")
+read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
+read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] " distro
+read -p "Choose a timezone (eg America/Toronto). >" time
+read -p "What will the hostname of this computer be? >" host
+read -s -p "Enter the root password. >" rpass
 echo
-user=$(read -p "Enter your username. >")
-upass=$(read -s -p "Enter your user password. >")
+read -p "Enter your username. >" user
+read -s -p "Enter your user password. >" upass
 echo
 
 #Set system time
