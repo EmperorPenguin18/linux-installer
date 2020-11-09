@@ -24,8 +24,10 @@ distro=$(read -p "What distro do you want to install? Default is Arch. [arch/deb
 time=$(read -p "Choose a timezone (eg America/Toronto). >")
 host=$(read -p "What will the hostname of this computer be? >")
 rpass=$(read -s -p "Enter the root password. >")
+echo
 user=$(read -p "Enter your username. >")
 upass=$(read -s -p "Enter your user password. >")
+echo
 
 #Set system time
 timedatectl set-ntp true
@@ -172,11 +174,11 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-arch-chroot /mnt echo root:$(echo $rpass) | chpasswd
+arch-chroot /mnt printf "$rpass\n$rpass\n" | passwd
 
 #Create user
 arch-chroot /mnt useradd -m $user
-arch-chroot /mnt echo $(echo $user):$(echo $upass) | chpasswd
+arch-chroot /mnt printf "$upass\n$upass\n" | passwd $user
 arch-chroot /mnt usermod -aG audio,video,optical,storage $user
 arch-chroot /mnt echo "permit persist $user" > /etc/doas.conf
 
