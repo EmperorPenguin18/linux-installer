@@ -86,7 +86,6 @@ mount /dev/$(echo $DISKNAME)1 /mnt/boot/EFI
 mount -o subvol=_active/homevol /dev/$(echo $DISKNAME)2 /mnt/home
 
 #Configure mirrors
-pacman -S reflector --noconfirm
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Sy
 
