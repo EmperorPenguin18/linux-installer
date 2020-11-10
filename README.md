@@ -9,7 +9,7 @@ Features:
 - BTRFS filesystem with subvolumes and fstab configured
 - SATA and NVMe drives
 - Install multiple distros from one iso
-- AMD and Intel CPUs
+- AMD and Intel 64 bit CPUs
 - Support for being installed inside VirtualBox and KVM/QEMU
 - SSDs and HDDs
 - GRUB as bootloader
