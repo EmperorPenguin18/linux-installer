@@ -15,6 +15,8 @@ echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
+echo
+echo "Disks:"
 lsblk | grep disk | awk '{print $1 " " $4;}'
 read -p "Choose what disk you want to install to. >" DISKNAME
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
@@ -28,7 +30,7 @@ read -s -p "Enter your user password. >" upass
 echo
 
 #Get host ready
-pacman -S dmidecode parted btrfs-progs dosfstools reflector arch-install-scripts --noconfirm
+pacman -S dmidecode parted btrfs-progs dosfstools util-linux reflector arch-install-scripts --noconfirm --needed
 timedatectl set-ntp true
 
 #Partition disk
