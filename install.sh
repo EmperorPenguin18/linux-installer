@@ -188,4 +188,5 @@ echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
 
+#*Undo changes to host*
 #*Encrypted disk*
