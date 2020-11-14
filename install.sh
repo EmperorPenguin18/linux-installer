@@ -173,17 +173,19 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-arch-chroot /mnt printf "$rpass\n$rpass\n" | chroot /mnt passwd
+printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
 
 #Create user
 arch-chroot /mnt useradd -m $user
-arch-chroot /mnt printf "$upass\n$upass\n" | chroot /mnt passwd $user
-arch-chroot /mnt echo "permit persist $user" > /etc/doas.conf
+printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
 arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
-#Done
-reboot
+echo "-------------------------------------------------"
+echo "          All done! You can reboot now.          "
+echo "-------------------------------------------------"
+
 #*Encrypted disk*
