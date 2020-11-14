@@ -14,13 +14,12 @@ Features:
 - SSDs and HDDs
 - GRUB as bootloader
 - Full encrypted disk
-- Performance kernels used instead of standard ones
-- doas used instead of sudo because I don't need that much permission management
+- Performance kernels
+- doas used instead of sudo
 
 How to use:
-1. Must be run from an Arch live iso.
-2. The only drives connected must be the usb and the target drive with no partitions
-3. Make script executable (chmod +x) and run with ./install.sh
+1. Must be run from an Arch environment. Live iso recommended because of CPU detection and package installs aren't permanent.
+3. Make script executable (chmod +x) and run it with root privileges (./install.sh)
 4. Answer prompts. Not designed to be user friendly, just covers the basics
 5. Wait for installation to complete
 6. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
