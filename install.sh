@@ -9,16 +9,14 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    echo "This is not an Arch system"
    exit 1
 fi
-if [ $(lsblk | wc -l) -gt 4 ]; then
-   echo "Drives aren't set up right"
-   exit 1
-fi
 
 #Prompts
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
+lsblk | grep disk | awk '{print $1 " " $4;}'
+read -p "Choose what disk you want to install to. >" DISKNAME
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
 read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] " distro
 read -p "Choose a timezone (eg America/Toronto). >" time
@@ -34,7 +32,6 @@ pacman -S dmidecode parted btrfs-progs dosfstools reflector arch-install-scripts
 timedatectl set-ntp true
 
 #Partition disk
-DISKNAME=$(lsblk | grep disk | awk '{print $1;}')
 DISKSIZE=$(lsblk --output SIZE -n -d /dev/$DISKNAME | sed 's/.$//')
 MEMSIZE=$(dmidecode -t 17 | grep "Size.*MB" | awk '{s+=$2} END {print s / 1024}')
 if [[ $swap = "n" ]]; then
