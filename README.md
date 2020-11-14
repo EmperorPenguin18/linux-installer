@@ -18,7 +18,7 @@ Features:
 - doas used instead of sudo
 
 How to use:
-1. Must be run from an Arch environment. Live iso recommended because of CPU detection and package installs aren't permanent.
+1. Must be run from an Arch environment. Live iso recommended.
 3. Make script executable (chmod +x) and run it with root privileges (./install.sh)
 4. Answer prompts. Not designed to be user friendly, just covers the basics
 5. Wait for installation to complete
