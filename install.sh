@@ -18,6 +18,7 @@ echo "Please answer the following questions to begin:"
 echo
 echo "Disks:"
 lsblk | grep disk | awk '{print $1 " " $4;}'
+echo
 read -p "Choose what disk you want to install to. >" DISKNAME
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
 read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] " distro
