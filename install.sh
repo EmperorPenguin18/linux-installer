@@ -29,11 +29,11 @@ read -p "Enter your username. >" user
 read -s -p "Enter your user password. >" upass
 echo
 
-#Set system time
+#Get host ready
+pacman -S dmidecode parted btrfs-progs dosfstools reflector arch-install-scripts --noconfirm
 timedatectl set-ntp true
 
 #Partition disk
-pacman -S dmidecode --noconfirm
 DISKNAME=$(lsblk | grep disk | awk '{print $1;}')
 DISKSIZE=$(lsblk --output SIZE -n -d /dev/$DISKNAME | sed 's/.$//')
 MEMSIZE=$(dmidecode -t 17 | grep "Size.*MB" | awk '{s+=$2} END {print s / 1024}')
