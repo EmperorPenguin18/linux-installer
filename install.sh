@@ -101,7 +101,7 @@ else
 fi
 if [[ $distro = "debian" ]]; then
    pacman -S debootstrap
-   #*
+   debootstrap --arch x86_64 buster /mnt http://deb.debian.org/debian
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -113,7 +113,7 @@ elif [[ $distro = "fedora" ]]; then
    cd ../
    rm -r dnf
    cd linux-installer
-   #*
+   dnf install --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --assumeyes --nodocs #systemd dnf glibc-langpack-en passwd rtkit policycoreutils NetworkManager audit firewalld selinux-policy-targeted kbd zchunk sudo vim-minimal systemd-udev rootfiles less iputils deltarpm sqlite lz4 xfsprogs
 elif [[ $distro = "void" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -125,7 +125,7 @@ elif [[ $distro = "void" ]]; then
    cd ../
    rm -r xpbs
    cd linux-installer
-   #*
+   XBPS_ARCH=x86_64 xbps-install -S -r /mnt -R "https://alpha.us.repo.voidlinux.org/" base-system
 else
    pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
