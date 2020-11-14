@@ -176,7 +176,8 @@ arch-chroot /mnt systemctl enable NetworkManager
 arch-chroot /mnt printf "$rpass\n$rpass\n" | chroot /mnt passwd
 
 #Create user
-arch-chroot /mnt useradd -m -G audio,video,optical,storage -p $upass $user
+arch-chroot /mnt useradd -m $user
+arch-chroot /mnt printf "$upass\n$upass\n" | chroot /mnt passwd $user
 arch-chroot /mnt echo "permit persist $user" > /etc/doas.conf
 
 #Create bootloader
