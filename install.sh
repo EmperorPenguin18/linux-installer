@@ -85,6 +85,26 @@ mount -o subvol=_active/tmp /dev/$(echo $DISKNAME)2 /mnt/tmp
 mount /dev/$(echo $DISKNAME)1 /mnt/boot/EFI
 mount -o subvol=_active/homevol /dev/$(echo $DISKNAME)2 /mnt/home
 
+#Generate FSTAB
+UUID1=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
+UUID2=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
+if [[ $swap != "n" ]]; then
+   UUID3=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
+   echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
+fi
+echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 >> /mnt/etc/fstab
+if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
+   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+else
+   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
+   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+fi
+
 #Configure mirrors
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Sy
@@ -102,6 +122,7 @@ fi
 if [[ $distro = "debian" ]]; then
    pacman -S debootstrap --noconfirm
    debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
+   arch-chroot /mnt apt install #*
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -130,26 +151,6 @@ else
    pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
 #*Distro*
-
-#Generate FSTAB
-UUID1=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
-UUID2=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
-if [[ $swap != "n" ]]; then
-   UUID3=$(arch-chroot /mnt blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
-   echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
-fi
-echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 >> /mnt/etc/fstab
-if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
-   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
-else
-   echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
-   echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
-fi
 
 #Add btrfs to HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
