@@ -110,7 +110,6 @@ reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mir
 pacman -Sy
 
 #Install packages
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel"; else cpu="amd"; fi
 virtual=$(dmidecode -s system-product-name)
 if [[ $virtual = "VirtualBox" ]]; then
    virtual="virtualbox-guest-utils virtualbox-guest-dkms"
@@ -120,9 +119,20 @@ else
    virtual=""
 fi
 if [[ $distro = "debian" ]]; then
+   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel"; else cpu="amd64"; fi
    pacman -S debootstrap --noconfirm
    debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
-   arch-chroot /mnt apt install #*
+   echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
+   arch-chroot /mnt apt update
+   arch-chroot /mnt apt install -y linux-xanmod linux-headers-xanmod firmware-linux grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential
+   arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
+   arch-chroot /mnt make install -C grub-btrfs
+   rm -r /mnt/grub-btrfs
+   arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
+   arch-chroot /mnt OpenDoas/configure
+   arch-chroot /mnt make -C OpenDoas
+   arch-chroot /mnt make install -C OpenDoas
+   rm -r /mnt/OpenDoas
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -148,6 +158,7 @@ elif [[ $distro = "void" ]]; then
    cd linux-installer
    XBPS_ARCH=x86_64 xbps-install -S -r /mnt -R "https://alpha.us.repo.voidlinux.org/" base-system
 else
+   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel"; else cpu="amd"; fi
    pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
 #*Distro*
