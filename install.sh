@@ -59,7 +59,7 @@ fi
 
 #Format partitions
 mkfs.fat -F32 /dev/$(echo $DISKNAME)1
-mkfs.btrfs -L arch /dev/$(echo $DISKNAME)2
+mkfs.btrfs /dev/$(echo $DISKNAME)2
 if [[ $swap != "n" ]]; then
    mkswap /dev/$(echo $DISKNAME)3
    swapon /dev/$(echo $DISKNAME)3
@@ -100,8 +100,8 @@ else
    virtual=""
 fi
 if [[ $distro = "debian" ]]; then
-   pacman -S debootstrap
-   debootstrap --arch x86_64 buster /mnt http://deb.debian.org/debian
+   pacman -S debootstrap --noconfirm
+   debootstrap --no-check-gpg --arch x86_64 buster /mnt http://deb.debian.org/debian
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
