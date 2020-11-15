@@ -101,7 +101,7 @@ else
 fi
 if [[ $distro = "debian" ]]; then
    pacman -S debootstrap --noconfirm
-   debootstrap --no-check-gpg --arch x86_64 buster /mnt http://deb.debian.org/debian
+   debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
