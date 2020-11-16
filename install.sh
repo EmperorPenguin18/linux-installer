@@ -164,11 +164,19 @@ fi
 #*Distro*
 
 #Add btrfs to HOOKS
-echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
-echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
-echo "FILES=()" >> /mnt/etc/mkinitcpio.conf
-echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
+if [[ $distro = "debian" ]]; then
+   echo "MODULES=()" > /mnt/etc/initramfs/initramfs.conf
+   echo "BINARIES=()" >> /mnt/etc/initramfs/initramfs.conf
+   echo "FILES=()" >> /mnt/etc/initramfs/initramfs.conf
+   echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs/initramfs.conf
+   arch-chroot /mnt update-initramfs -u
+else
+   echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
+   echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
+   echo "FILES=()" >> /mnt/etc/mkinitcpio.conf
+   echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
+   arch-chroot /mnt mkinitcpio -P
+fi
 
 #Set localization stuff
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
