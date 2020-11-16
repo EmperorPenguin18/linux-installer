@@ -123,11 +123,10 @@ if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
    pacman -S debootstrap --noconfirm
    debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
-   arch-chroot /mnt apt update
-   arch-chroot /mnt apt install gnupg
+   arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y linux-xanmod-edge linux-headers-xanmod-edge firmware-linux grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux grub2 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
