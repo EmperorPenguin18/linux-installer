@@ -209,9 +209,13 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-if [[ $distro = "debian" ]]; then arch-chroot /mnt ln -sf /usr/sbin/* /usr/local/sbin/; fi
-arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+if [[ $distro = "debian" ]]; then
+   arch-chroot /mnt /usr/sbin/grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+else
+   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+fi
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
