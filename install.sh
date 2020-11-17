@@ -126,7 +126,7 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales
+   echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -139,7 +139,7 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
-   ln -sf /usr/sbin /usr/local/sbin
+   arch-chroot /mnt ln -sf /usr/sbin /usr/local/sbin
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
