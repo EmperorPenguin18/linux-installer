@@ -126,15 +126,20 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux grub2 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential
+   arch-chroot /mnt DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
    arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
    arch-chroot /mnt OpenDoas/configure
+   mv /mnt/config.* /mnt/OpenDoas/
+   echo '#! /bin/sh' > /mnt/usr/bin/yacc
+   echo "exec '/usr/bin/bison' -y \"\$@\"" >> /mnt/usr/bin/yacc
    arch-chroot /mnt make -C OpenDoas
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
+   arch-chroot /mnt apt purge -y nano vim-common
+   ln -sf /usr/sbin /usr/local/sbin
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -165,8 +170,16 @@ else
 fi
 #*Distro*
 
+#Set localization stuff
+ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
+arch-chroot /mnt hwclock --systohc
+echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
+arch-chroot /mnt locale-gen
+echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+
 #Add btrfs to HOOKS
 if [[ $distro = "debian" ]]; then
+   mkdir /mnt/etc/initramfs
    echo "MODULES=()" > /mnt/etc/initramfs/initramfs.conf
    echo "BINARIES=()" >> /mnt/etc/initramfs/initramfs.conf
    echo "FILES=()" >> /mnt/etc/initramfs/initramfs.conf
@@ -179,13 +192,6 @@ else
    echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
    arch-chroot /mnt mkinitcpio -P
 fi
-
-#Set localization stuff
-ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
-arch-chroot /mnt hwclock --systohc
-echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
-arch-chroot /mnt locale-gen
-echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
 echo $host > /mnt/etc/hostname
