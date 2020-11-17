@@ -184,7 +184,8 @@ if [[ $distro = "debian" ]]; then
    echo "BINARIES=()" >> /mnt/etc/initramfs/initramfs.conf
    echo "FILES=()" >> /mnt/etc/initramfs/initramfs.conf
    echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs/initramfs.conf
-   arch-chroot /mnt /usr/sbin/update-initramfs -u
+   arch-chroot /mnt /usr/sbin/update-initramfs -k all -c
+   #arch-chroot /mnt /usr/sbin/update-initramfs -u
 else
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
