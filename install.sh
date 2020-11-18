@@ -126,20 +126,22 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
+   echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
    arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
    arch-chroot /mnt OpenDoas/configure
    mv /mnt/config.* /mnt/OpenDoas/
-   echo '#!/bin/sh' > /mnt/usr/bin/yacc
-   echo "exec '/usr/bin/bison' -y \"\$@\"" >> /mnt/usr/bin/yacc
+   #echo '#!/bin/sh' > /mnt/usr/bin/yacc
+   #echo "exec '/usr/bin/bison' -y \"\$@\"" >> /mnt/usr/bin/yacc
    arch-chroot /mnt make -C OpenDoas
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt ln -sf /usr/sbin/* /usr/local/sbin/
+   sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /mnt/usr/sbin/update-initramfs
+   arch-chroot /mnt apt install -y linux-xanmod-edge
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -178,15 +180,7 @@ arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Add btrfs to HOOKS
-if [[ $distro = "debian" ]]; then
-   #echo "MODULES=()" > /mnt/etc/initramfs-tools/initramfs.conf
-   #echo "BINARIES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
-   #echo "FILES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
-   #echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs-tools/initramfs.conf
-   sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /mnt/usr/sbin/update-initramfs
-   #arch-chroot /mnt /usr/sbin/update-initramfs -k all -c
-   arch-chroot /mnt /usr/sbin/update-initramfs -u
-else
+if [[ $distro = "arch" ]]; then
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
    echo "FILES=()" >> /mnt/etc/mkinitcpio.conf
