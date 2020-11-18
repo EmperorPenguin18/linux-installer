@@ -133,7 +133,7 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
    arch-chroot /mnt OpenDoas/configure
    mv /mnt/config.* /mnt/OpenDoas/
-   echo '#! /bin/sh' > /mnt/usr/bin/yacc
+   echo '#!/bin/sh' > /mnt/usr/bin/yacc
    echo "exec '/usr/bin/bison' -y \"\$@\"" >> /mnt/usr/bin/yacc
    arch-chroot /mnt make -C OpenDoas
    arch-chroot /mnt make install -C OpenDoas
@@ -183,9 +183,9 @@ if [[ $distro = "debian" ]]; then
    #echo "BINARIES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
    #echo "FILES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
    #echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs-tools/initramfs.conf
-   sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /usr/sbin/update-initramfs
+   sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /mnt/usr/sbin/update-initramfs
    #arch-chroot /mnt /usr/sbin/update-initramfs -k all -c
-   arch-chroot /mnt /usr/sbin/update-initramfs -k all -u
+   arch-chroot /mnt /usr/sbin/update-initramfs -u
 else
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
