@@ -179,13 +179,13 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Add btrfs to HOOKS
 if [[ $distro = "debian" ]]; then
-   mkdir /mnt/etc/initramfs
-   echo "MODULES=()" > /mnt/etc/initramfs/initramfs.conf
-   echo "BINARIES=()" >> /mnt/etc/initramfs/initramfs.conf
-   echo "FILES=()" >> /mnt/etc/initramfs/initramfs.conf
-   echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs/initramfs.conf
-   arch-chroot /mnt /usr/sbin/update-initramfs -k all -c
-   #arch-chroot /mnt /usr/sbin/update-initramfs -u
+   #echo "MODULES=()" > /mnt/etc/initramfs-tools/initramfs.conf
+   #echo "BINARIES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
+   #echo "FILES=()" >> /mnt/etc/initramfs-tools/initramfs.conf
+   #echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/initramfs-tools/initramfs.conf
+   sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /usr/sbin/update-initramfs
+   #arch-chroot /mnt /usr/sbin/update-initramfs -k all -c
+   arch-chroot /mnt /usr/sbin/update-initramfs -k all -u
 else
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
