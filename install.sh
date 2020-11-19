@@ -134,14 +134,10 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
    arch-chroot /mnt OpenDoas/configure
    mv /mnt/config.* /mnt/OpenDoas/
-   #echo '#!/bin/sh' > /mnt/usr/bin/yacc
-   #echo "exec '/usr/bin/bison' -y \"\$@\"" >> /mnt/usr/bin/yacc
    arch-chroot /mnt make -C OpenDoas
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
-   #arch-chroot /mnt ln -sf /usr/sbin/* /usr/local/sbin/
-   #sed -i 's|mkinitramfs|/usr/sbin/mkinitramfs|g' /mnt/usr/sbin/update-initramfs
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -204,13 +200,8 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-if [[ $distro = "debian" ]]; then
-   arch-chroot /mnt /usr/sbin/grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-   arch-chroot /mnt /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
-else
-   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-fi
+arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
