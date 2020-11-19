@@ -147,6 +147,7 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
+   update-initramfs -k all -c
    arch-chroot /mnt apt install -y grub-efi-amd64
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
@@ -208,10 +209,8 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-if [[ $distro != "debian" ]]; then
-   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-fi
+arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
