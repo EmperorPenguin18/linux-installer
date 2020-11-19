@@ -146,7 +146,7 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
-   arch-chroot /mnt apt upgrade
+   arch-chroot /mnt apt upgrade -y
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
