@@ -130,7 +130,7 @@ if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
    pacman -S debootstrap --noconfirm
    debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
-   echo "PATH=\"/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin\"" >> /etc/environment && source /etc/environment
+   echo "PATH=\"/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin\"" >> /mnt/etc/environment
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
    set_locale
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
@@ -147,7 +147,7 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
-   update-initramfs -k all -c
+   #update-initramfs -k all -c
    arch-chroot /mnt apt install -y grub-efi-amd64
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
@@ -209,8 +209,8 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+#arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+#arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
