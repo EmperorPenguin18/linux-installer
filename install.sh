@@ -1,5 +1,12 @@
 #!/bin/bash
 
+set_locale()
+{
+   echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
+   arch-chroot /mnt locale-gen
+   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+}
+
 #Checks before starting
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
@@ -124,10 +131,11 @@ if [[ $distro = "debian" ]]; then
    pacman -S debootstrap --noconfirm
    debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
    echo "PATH=\"/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin\"" >> /etc/environment && source /etc/environment
-   arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg
+   arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
+   set_locale
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison locales" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
+   echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install linux-xanmod-edge firmware-linux grub-efi-amd64 grub-efi efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -138,6 +146,7 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
+   arch-chroot /mnt apt upgrade
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -171,9 +180,7 @@ fi
 #Set localization stuff
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
-echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
-arch-chroot /mnt locale-gen
-echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+if [[ $distro != "debian" ]]; then set_locale; fi
 
 #Add btrfs to HOOKS
 if [[ $distro = "arch" ]]; then
@@ -200,8 +207,10 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+if [[ $distro != "debian" ]]; then
+   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+fi
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
