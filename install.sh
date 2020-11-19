@@ -128,9 +128,11 @@ else
 fi
 if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
-   pacman -S debootstrap --noconfirm
-   debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
-   echo "PATH=\"/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin\"" >> /mnt/etc/environment
+   #pacman -S debootstrap --noconfirm
+   #debootstrap --no-check-gpg --arch amd64 buster /mnt http://deb.debian.org/debian
+   pacman -S debootstrap debian-archive-keyring --noconfirm
+   debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian
+   sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
    set_locale
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
