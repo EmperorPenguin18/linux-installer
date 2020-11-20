@@ -66,7 +66,7 @@ elif [[ $swap = "n" ]]; then
    parted --script /dev/$DISKNAME \
       mklabel msdos \
       mkpart P1 btrfs 1MB $(echo $DISKSIZE)GB
-      set 1 boot on \
+      set 1 boot on
 elif [[ $BOOTTYPE = "efi" ]]; then
    ROOTNAME=$(echo $DISKNAME2)2
    SWAPNAME=$(echo $DISKNAME2)3
