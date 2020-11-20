@@ -96,7 +96,7 @@ mount -o subvol=_active/homevol /dev/$(echo $DISKNAME)2 /mnt/home
 mkdir /mnt/etc
 UUID1=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
 UUID2=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
-#echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
+echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
 if [[ $swap != "n" ]]; then
    UUID3=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
    echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
@@ -112,7 +112,6 @@ else
    echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
    echo UUID=$UUID2 /home/$(echo $user)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
 fi
-echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 >> /mnt/etc/fstab
 
 #Configure mirrors
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
@@ -136,8 +135,7 @@ if [[ $distro = "debian" ]]; then
    set_locale
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   #echo "DEBIAN_FRONTEND=noninteractive apt -y install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
-   arch-chroot /mnt DEBIAN_FRONTEND=noninteractive apt -y install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
+   arch-chroot /mnt apt install -y firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -149,6 +147,7 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
+   arch-chroot /mnt apt install linux-xanmod-edge
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
