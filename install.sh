@@ -65,7 +65,7 @@ elif [[ $swap = "n" ]]; then
    ROOTNAME=$(echo $DISKNAME2)1
    parted --script /dev/$DISKNAME \
       mklabel msdos \
-      mkpart P1 btrfs 1MB $(echo $DISKSIZE)GB
+      mkpart primary btrfs 1MB $(echo $DISKSIZE)GB
       set 1 boot on
 elif [[ $BOOTTYPE = "efi" ]]; then
    ROOTNAME=$(echo $DISKNAME2)2
@@ -81,9 +81,9 @@ else
    SWAPNAME=$(echo $DISKNAME2)2
    parted --script /dev/$DISKNAME \
       mklabel msdos \
-      mkpart P1 btrfs 1MB $(expr $DISKSIZE - $MEMSIZE)GB \
+      mkpart primary btrfs 1MB $(expr $DISKSIZE - $MEMSIZE)GB \
       set 1 boot on \
-      mkpart P2 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
+      mkpart primary linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
 fi
 
 #Format partitions
