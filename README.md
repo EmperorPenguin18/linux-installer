@@ -4,7 +4,7 @@ Universal GNU+Linux installer script
 Support for Arch, Debian buster, Fedora 33, and Void included. These distros are chosen because they each have a unique package manager. Goal is to support as much hardware as possible. Made to work how I like things so if you want it to do something else fork away.
 
 Features:
-- GPT + EFI booting
+- EFI and Legacy booting
 - Choice of yes/no swap (sized for hibernate support)
 - BTRFS filesystem with subvolumes and fstab configured
 - SATA and NVMe drives
