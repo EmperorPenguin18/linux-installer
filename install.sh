@@ -42,7 +42,7 @@ pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts 
 timedatectl set-ntp true
 
 #Partition disk
-if [[ $(efibootmgr | wc -l) -gt 1 ]]; then
+if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
    BOOTTYPE="legacy"
