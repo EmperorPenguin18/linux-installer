@@ -26,6 +26,7 @@ echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
+echo
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 echo "Choose what disk you want to install to. >$DISKNAME"
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
@@ -36,14 +37,16 @@ time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf -
 echo "Choose a timezone (eg America/Toronto). >$time"
 read -p "What will the hostname of this computer be? >" host
 read -s -p "Enter the root password. >" rpass
-read -s -p "Confirm root password. >" rpass_check
-if [ "${rpass}" != "${rpass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 echo
+read -s -p "Confirm root password. >" rpass_check
+echo
+if [ "${rpass}" != "${rpass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 read -p "Enter your username. >" user
 read -s -p "Enter your user password. >" upass
-read -s -p "Confirm user password. >" upass_check
-if [ "${upass}" != "${upass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 echo
+read -s -p "Confirm user password. >" upass_check
+echo
+if [ "${upass}" != "${upass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 
 #Partition disk
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
