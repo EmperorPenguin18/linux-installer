@@ -136,8 +136,8 @@ if [[ $distro = "debian" ]]; then
    set_locale
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   #echo "DEBIAN_FRONTEND=noninteractive apt -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
-   echo "DEBIAN_FRONTEND=noninteractive apt -y install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
+   #echo "DEBIAN_FRONTEND=noninteractive apt -y install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison" > /mnt/apt.sh && arch-chroot /mnt chmod +x apt.sh && arch-chroot /mnt ./apt.sh && rm /mnt/apt.sh
+   arch-chroot /mnt DEBIAN_FRONTEND=noninteractive apt -y install linux-xanmod-edge firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
