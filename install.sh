@@ -17,29 +17,33 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    exit 1
 fi
 
+#Get host ready
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf --noconfirm --needed &>/dev/null
+timedatectl set-ntp true
+
 #Prompts
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
-echo
-echo "Disks:"
-lsblk | grep disk | awk '{print $1 " " $4;}'
-echo
-read -p "Choose what disk you want to install to. >" DISKNAME
+DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
+echo "Choose what disk you want to install to. >$DISKNAME"
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
-read -p "What distro do you want to install? Default is Arch. [arch/debian/fedora/void] " distro
-read -p "Choose a timezone (eg America/Toronto). >" time
+distro=$(echo -e "Arch\nDebian\nFedora\nVoid" | fzf --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
+echo "What distro do you want to install? >$distro"
+rm -rf /usr/share/zoneinfo/right
+time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf --prompt "Choose a timezone. >" --layout reverse)
+echo "Choose a timezone (eg America/Toronto). >$time"
 read -p "What will the hostname of this computer be? >" host
 read -s -p "Enter the root password. >" rpass
+read -s -p "Confirm root password. >" rpass_check
+if [ "${rpass}" != "${rpass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 echo
 read -p "Enter your username. >" user
 read -s -p "Enter your user password. >" upass
+read -s -p "Confirm user password. >" upass_check
+if [ "${upass}" != "${upass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 echo
-
-#Get host ready
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr --noconfirm --needed
-timedatectl set-ntp true
 
 #Partition disk
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
