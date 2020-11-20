@@ -38,40 +38,62 @@ read -s -p "Enter your user password. >" upass
 echo
 
 #Get host ready
-pacman -S dmidecode parted btrfs-progs dosfstools util-linux reflector arch-install-scripts --noconfirm --needed
+pacman -S dmidecode parted btrfs-progs dosfstools reflector arch-install-scripts efibootmgr --noconfirm --needed
 timedatectl set-ntp true
 
 #Partition disk
+if [[ $(efibootmgr | wc -l) -gt 1 ]]; then
+   BOOTTYPE="efi"
+else
+   BOOTTYPE="legacy"
+fi
 DISKSIZE=$(lsblk --output SIZE -n -d /dev/$DISKNAME | sed 's/.$//')
 MEMSIZE=$(dmidecode -t 17 | grep "Size.*MB" | awk '{s+=$2} END {print s / 1024}')
-if [[ $swap = "n" ]]; then
+if [ $(echo $DISKNAME | head -c 2 ) = "sd" ]; then
+   DISKNAME2=$DISKNAME
+else
+   DISKNAME2=$(echo $DISKNAME)p
+fi
+if [[ $swap = "n" ]] && [[ $BOOTTYPE = "efi" ]]; then
+   ROOTNAME=$(echo $DISKNAME2)2
    parted --script /dev/$DISKNAME \
       mklabel gpt \
       mkpart P1 fat32 1MB 261MB \
       set 1 esp on \
       mkpart P2 btrfs 261MB $(echo $DISKSIZE)GB
-else
+elif [[ $swap = "n" ]]; then
+   ROOTNAME=$(echo $DISKNAME2)1
+   parted --script /dev/$DISKNAME \
+      mklabel msdos \
+      mkpart P1 btrfs 1MB $(echo $DISKSIZE)GB
+      set 1 boot on \
+elif [[ $BOOTYPE = "efi" ]]; then
+   ROOTNAME=$(echo $DISKNAME2)2
+   SWAPNAME=$(echo $DISKNAME2)3
    parted --script /dev/$DISKNAME \
       mklabel gpt \
       mkpart P1 fat32 1MB 261MB \
       set 1 esp on \
       mkpart P2 btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)GB \
       mkpart P3 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
-fi
-if [ $(echo $DISKNAME | head -c 2 ) = "sd" ]; then
-   DISKNAME=$DISKNAME
 else
-   DISKNAME=$(echo $DISKNAME)p
+   ROOTNAME=$(echo $DISKNAME2)1
+   SWAPNAME=$(echo $DISKNAME2)2
+   parted --script /dev/$DISKNAME \
+      mklabel msdos \
+      mkpart P1 btrfs 1MB $(expr $DISKSIZE - $MEMSIZE)GB \
+      set 1 boot on \
+      mkpart P2 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
 fi
 
 #Format partitions
-mkfs.fat -F32 /dev/$(echo $DISKNAME)1
-mkfs.btrfs /dev/$(echo $DISKNAME)2
+if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F32 /dev/$(echo $DISKNAME2)1; fi
+mkfs.btrfs /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
-   mkswap /dev/$(echo $DISKNAME)3
-   swapon /dev/$(echo $DISKNAME)3
+   mkswap /dev/$ROOTNAME
+   swapon /dev/$SWAPNAME
 fi
-mount /dev/$(echo $DISKNAME)2 /mnt
+mount /dev/$ROOTNAME /mnt
 
 #BTRFS subvolumes
 path=$(pwd)
@@ -85,22 +107,20 @@ cd $path
 
 #Mount subvolumes for install
 umount /mnt
-mount -o subvol=_active/rootvol /dev/$(echo $DISKNAME)2 /mnt
+mount -o subvol=_active/rootvol /dev/$ROOTNAME /mnt
+mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
 mkdir /mnt/{home,tmp,boot}
-mkdir /mnt/boot/EFI
-mount -o subvol=_active/tmp /dev/$(echo $DISKNAME)2 /mnt/tmp
-mount /dev/$(echo $DISKNAME)1 /mnt/boot/EFI
-mount -o subvol=_active/homevol /dev/$(echo $DISKNAME)2 /mnt/home
+if [[ $BOOTTYPE = "efi" ]]; then
+   mkdir /mnt/boot/EFI
+   mount /dev/$(echo $DISKNAME2)1 /mnt/boot/EFI
+fi
+mount -o subvol=_active/homevol /dev/$ROOTNAME /mnt/home
 
 #Generate FSTAB
 mkdir /mnt/etc
-UUID1=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)1)
-UUID2=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)2)
-echo UUID=$UUID1 /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
-if [[ $swap != "n" ]]; then
-   UUID3=$(blkid -s UUID -o value /dev/$(echo $DISKNAME)3)
-   echo UUID=$UUID3 none  swap  defaults 0  0 >> /mnt/etc/fstab
-fi
+if [[ $BOOTTYPE = "efi" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab; fi
+UUID2=$(blkid -s UUID -o value /dev/$ROOTNAME)
+if [[ $swap != "n" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$SWAPNAME) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
 if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
    echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
    echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
@@ -128,6 +148,7 @@ else
 fi
 if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
+   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-amd64"; else grub="grub2"; fi
    pacman -S debootstrap debian-archive-keyring --noconfirm
    debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
@@ -136,7 +157,7 @@ if [[ $distro = "debian" ]]; then
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
+   arch-chroot /mnt apt install -y firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -209,7 +230,11 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+if [[ $BOOTTYPE = "efi" ]]; then
+   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+else
+   arch-chroot /mnt grub-install --bootloader-id=GRUB --recheck /dev/$DISKNAME
+fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "-------------------------------------------------"
