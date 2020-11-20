@@ -38,7 +38,7 @@ read -s -p "Enter your user password. >" upass
 echo
 
 #Get host ready
-pacman -S dmidecode parted btrfs-progs dosfstools reflector arch-install-scripts efibootmgr --noconfirm --needed
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr --noconfirm --needed
 timedatectl set-ntp true
 
 #Partition disk
@@ -67,7 +67,7 @@ elif [[ $swap = "n" ]]; then
       mklabel msdos \
       mkpart P1 btrfs 1MB $(echo $DISKSIZE)GB
       set 1 boot on \
-elif [[ $BOOTYPE = "efi" ]]; then
+elif [[ $BOOTTYPE = "efi" ]]; then
    ROOTNAME=$(echo $DISKNAME2)2
    SWAPNAME=$(echo $DISKNAME2)3
    parted --script /dev/$DISKNAME \
