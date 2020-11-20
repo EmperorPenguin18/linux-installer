@@ -133,6 +133,7 @@ if [[ $distro = "debian" ]]; then
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
    set_locale
+   sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
    arch-chroot /mnt apt install -y firmware-linux grub-efi-amd64 efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
@@ -147,7 +148,7 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
-   arch-chroot /mnt apt install linux-xanmod-edge
+   arch-chroot /mnt apt install -y linux-xanmod-edge
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
