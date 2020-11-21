@@ -26,3 +26,6 @@ How to use:
 
 Future:
 - Support ARM processors (single-board computers, new macbooks)
+
+Bugs:
+- Can't use NVMe drives with EFI boot
