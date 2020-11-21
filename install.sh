@@ -98,7 +98,7 @@ fi
 if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F32 /dev/$(echo $DISKNAME2)1; fi
 mkfs.btrfs /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
-   mkswap /dev/$ROOTNAME
+   mkswap /dev/$SWAPNAME
    swapon /dev/$SWAPNAME
 fi
 mount /dev/$ROOTNAME /mnt
