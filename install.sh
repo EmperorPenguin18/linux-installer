@@ -17,7 +17,7 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    exit 1
 fi
 
-#Setup
+#Prepare for installation
 clear
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
