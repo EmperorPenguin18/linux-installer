@@ -27,7 +27,7 @@ How to use:
 Future:
 - Support ARM processors (single-board computers, new macbooks)
 
-Bugs:
+Known bugs:
 - Can't use NVMe drives with EFI boot
 - Might have to resize cow space (I'm not sure why). https://ostechnix.com/adjust-size-root-partition-live-arch-linux/
 
