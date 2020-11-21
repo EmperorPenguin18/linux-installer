@@ -116,8 +116,8 @@ cd $path
 #Mount subvolumes for install
 umount /mnt
 mount -o subvol=_active/rootvol /dev/$ROOTNAME /mnt
-mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
 mkdir /mnt/{home,tmp,boot}
+mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
 if [[ $BOOTTYPE = "efi" ]]; then
    mkdir /mnt/boot/EFI
    mount /dev/$(echo $DISKNAME2)1 /mnt/boot/EFI
