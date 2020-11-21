@@ -232,7 +232,7 @@ arch-chroot /mnt systemctl enable NetworkManager
 printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
 
 #Create user
-arch-chroot /mnt useradd -m $user
+arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
