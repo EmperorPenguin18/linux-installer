@@ -7,6 +7,29 @@ set_locale()
    echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 }
 
+yay_install()
+{
+   pth=$(pwd)
+   pacman -S base-devel --needed --noconfirm
+   mkdir /home/build
+   chgrp nobody /home/build
+   chmod g+ws /home/build
+   setfacl -m u::rwx,g::rwx /home/build
+   setfacl -d --set u::rwx,g::rwx,o::- /home/build
+   usermod -d /home/build nobody
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/yay" >> /etc/sudoers
+   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
+   cd /home/build
+   sudo -u nobody git clone https://aur.archlinux.org/yay.git
+   chmod -R g+w yay/
+   cd yay
+   sudo -u nobody makepkg -si --noconfirm
+   cd ../
+   rm -r yay
+   cd $pth
+}
+
 #Checks before starting
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
@@ -103,14 +126,14 @@ fi
 mount /dev/$ROOTNAME /mnt
 
 #BTRFS subvolumes
-path=$(pwd)
+pth=$(pwd)
 cd /mnt
 btrfs subvolume create _active
 btrfs subvolume create _active/rootvol
 btrfs subvolume create _active/homevol
 btrfs subvolume create _active/tmp
 btrfs subvolume create _snapshots
-cd $path
+cd $pth
 
 #Mount subvolumes for install
 umount /mnt
@@ -181,28 +204,12 @@ if [[ $distro = "debian" ]]; then
    #*noninteractive grub*
    #*microcode?*
 elif [[ $distro = "fedora" ]]; then
-   chmod 777 ../
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
-   cd ../
-   su nobody -c "git clone https://aur.archlinux.org/dnf.git"
-   cd dnf
-   su nobody -c "makepkg -si --noconfirm"
-   cd ../
-   rm -r dnf
-   cd linux-installer
+   yay_install
+   sudo -u nobody yay -S dnf --noconfirm
    dnf install --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --assumeyes --nodocs #systemd dnf glibc-langpack-en passwd rtkit policycoreutils NetworkManager audit firewalld selinux-policy-targeted kbd zchunk sudo vim-minimal systemd-udev rootfiles less iputils deltarpm sqlite lz4 xfsprogs
 elif [[ $distro = "void" ]]; then
-   chmod 777 ../
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
-   cd ../
-   su nobody -c "git clone https://aur.archlinux.org/xbps.git"
-   cd xbps
-   su nobody -c "makepkg -si --noconfirm"
-   cd ../
-   rm -r xpbs
-   cd linux-installer
+   yay_install
+   sudo -u nobody yay -S xbps --noconfirm
    XBPS_ARCH=x86_64 xbps-install -S -r /mnt -R "https://alpha.us.repo.voidlinux.org/" base-system
 else
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
