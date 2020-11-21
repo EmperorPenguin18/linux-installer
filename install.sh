@@ -241,7 +241,7 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
 else
-   arch-chroot /mnt grub-install --bootloader-id=GRUB --recheck /dev/$DISKNAME
+   arch-chroot /mnt grub-install --target=i386-pc --bootloader-id=GRUB --recheck /dev/$DISKNAME
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
