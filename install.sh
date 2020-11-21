@@ -17,16 +17,15 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    exit 1
 fi
 
-#Get host ready
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf --noconfirm --needed &>/dev/null
-timedatectl set-ntp true
-
-#Prompts
+#Setup
+clear
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf --noconfirm --needed &>/dev/null
+timedatectl set-ntp true
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
