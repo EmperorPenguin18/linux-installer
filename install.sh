@@ -66,9 +66,9 @@ if [[ $swap = "n" ]] && [[ $BOOTTYPE = "efi" ]]; then
    ROOTNAME=$(echo $DISKNAME2)2
    parted --script /dev/$DISKNAME \
       mklabel gpt \
-      mkpart P1 fat32 1MB 261MB \
+      mkpart esp fat32 1MB 261MB \
       set 1 esp on \
-      mkpart P2 btrfs 261MB $(echo $DISKSIZE)GB
+      mkpart root btrfs 261MB $(echo $DISKSIZE)GB
 elif [[ $swap = "n" ]]; then
    ROOTNAME=$(echo $DISKNAME2)1
    parted --script /dev/$DISKNAME \
@@ -80,10 +80,10 @@ elif [[ $BOOTTYPE = "efi" ]]; then
    SWAPNAME=$(echo $DISKNAME2)3
    parted --script /dev/$DISKNAME \
       mklabel gpt \
-      mkpart P1 fat32 1MB 261MB \
+      mkpart esp fat32 1MB 261MB \
       set 1 esp on \
-      mkpart P2 btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)GB \
-      mkpart P3 linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
+      mkpart root btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)GB \
+      mkpart swap linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
 else
    ROOTNAME=$(echo $DISKNAME2)1
    SWAPNAME=$(echo $DISKNAME2)2
