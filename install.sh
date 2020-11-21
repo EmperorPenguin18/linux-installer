@@ -177,6 +177,9 @@ if [[ $distro = "debian" ]]; then
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
    arch-chroot /mnt apt install -y linux-xanmod-edge
+   #*efi*
+   #*noninteractive grub*
+   #*microcode?*
 elif [[ $distro = "fedora" ]]; then
    chmod 777 ../
    echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
