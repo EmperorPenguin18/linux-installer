@@ -55,6 +55,7 @@ read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
 distro=$(echo -e "Arch\nDebian\nFedora\nVoid" | fzf --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
 clear
 rm -rf /usr/share/zoneinfo/right
+rm -rf /usr/share/zoneinfo/posix
 time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf --prompt "Choose a timezone. >" --layout reverse)
 clear
 read -p "What will the hostname of this computer be? >" host
