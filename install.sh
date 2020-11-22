@@ -194,9 +194,9 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
-   arch-chroot /mnt dpkg-reconfigure -a
+   arch-chroot /mnt dpkg-reconfigure linux-xanmod-edge $grub
    #*efi*
-   #*noninteractive grub*
+   #*noninteractive*
    #*microcode?*
 elif [[ $distro = "fedora" ]]; then
    yay_install
