@@ -79,6 +79,7 @@ else
 fi
 DISKSIZE=$(lsblk --output SIZE -n -d /dev/$DISKNAME | sed 's/.$//')
 MEMSIZE=$(dmidecode -t 17 | grep "Size.*MB" | awk '{s+=$2} END {print s / 1024}')
+MEMSIZE=$(bc <<< "$MEMSIZE * 1.5")
 if [ $(echo $DISKNAME | head -c 2 ) = "sd" ]; then
    DISKNAME2=$DISKNAME
 else
@@ -141,14 +142,14 @@ mount -o subvol=_active/rootvol /dev/$ROOTNAME /mnt
 mkdir /mnt/{home,tmp,boot}
 mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
 if [[ $BOOTTYPE = "efi" ]]; then
-   mkdir /mnt/boot/EFI
-   mount /dev/$(echo $DISKNAME2)1 /mnt/boot/EFI
+   mkdir /mnt/boot/efi
+   mount /dev/$(echo $DISKNAME2)1 /mnt/boot/efi
 fi
 mount -o subvol=_active/homevol /dev/$ROOTNAME /mnt/home
 
 #Generate FSTAB
 mkdir /mnt/etc
-if [[ $BOOTTYPE = "efi" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/EFI   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab; fi
+if [[ $BOOTTYPE = "efi" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/efi   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab; fi
 UUID2=$(blkid -s UUID -o value /dev/$ROOTNAME)
 if [[ $swap != "n" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$SWAPNAME) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
 if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
@@ -169,13 +170,6 @@ pacman -Sy
 
 #Install packages
 virtual=$(dmidecode -s system-product-name)
-if [[ $virtual = "VirtualBox" ]]; then
-   virtual="virtualbox-guest-utils virtualbox-guest-dkms"
-elif [[ $virtual = "KVM" ]]; then
-   virtual="qemu-guest-agent"
-else
-   virtual=""
-fi
 if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-amd64"; else grub="grub2"; fi
@@ -208,11 +202,21 @@ elif [[ $distro = "fedora" ]]; then
    sudo -u nobody yay -S dnf --noconfirm
    dnf install --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --assumeyes --nodocs #systemd dnf glibc-langpack-en passwd rtkit policycoreutils NetworkManager audit firewalld selinux-policy-targeted kbd zchunk sudo vim-minimal systemd-udev rootfiles less iputils deltarpm sqlite lz4 xfsprogs
 elif [[ $distro = "void" ]]; then
+   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel-ucode"; else cpu="linux-firmware-amd"; fi
+   if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
    yay_install
    sudo -u nobody yay -S xbps --noconfirm
-   XBPS_ARCH=x86_64 xbps-install -S -r /mnt -R "https://alpha.us.repo.voidlinux.org/" base-system
+   mkdir /etc/xbps.d
+   echo "repository=http://alpha.us.repo.voidlinux.org/current" > /etc/xbps.d/xbps.conf
+   echo "repository=http://alpha.us.repo.voidlinux.org/current/nonfree" >> /etc/xbps.d/xbps.conf
+   echo "repository=http://alpha.us.repo.voidlinux.org/current/multilib" >> /etc/xbps.d/xbps.conf
+   echo "repository=http://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /etc/xbps.d/xbps.conf
+   XBPS_ARCH=x86_64 xbps-install -Sy -r /mnt base-system
+   arch-chroot /mnt xbps-install -Sy linux-firmware grub-x86_64-efi grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
+   #arch-chroot /mnt xbps-reconfigure --force linux<x>.<y>
 else
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
+   if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
    pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
 fi
 #*Distro*
@@ -236,7 +240,11 @@ echo $host > /mnt/etc/hostname
 echo "127.0.0.1   localhost" > /mnt/etc/hosts
 echo "::1   localhost" >> /mnt/etc/hosts
 echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
-arch-chroot /mnt systemctl enable NetworkManager
+if [[ $distro != "void" ]]; then
+   arch-chroot /mnt systemctl enable NetworkManager
+else
+   arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
+fi
 
 #Create root password
 printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
@@ -248,7 +256,7 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
 if [[ $BOOTTYPE = "efi" ]]; then
-   arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
    arch-chroot /mnt grub-install --target=i386-pc --bootloader-id=GRUB --recheck /dev/$DISKNAME
 fi
