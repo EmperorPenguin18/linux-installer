@@ -47,7 +47,7 @@ echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf --noconfirm --needed &>/dev/null
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
 timedatectl set-ntp true
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
@@ -181,7 +181,7 @@ if [[ $distro = "debian" ]]; then
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -193,7 +193,7 @@ if [[ $distro = "debian" ]]; then
    rm -r /mnt/OpenDoas
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
-   arch-chroot /mnt apt install -y linux-xanmod-edge
+   arch-chroot /mnt dpkg-reconfigure -a
    #*efi*
    #*noninteractive grub*
    #*microcode?*
@@ -204,16 +204,24 @@ elif [[ $distro = "fedora" ]]; then
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel-ucode"; else cpu="linux-firmware-amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
-   yay_install
-   sudo -u nobody yay -S xbps --noconfirm
-   mkdir /etc/xbps.d
-   echo "repository=http://alpha.us.repo.voidlinux.org/current" > /etc/xbps.d/xbps.conf
-   echo "repository=http://alpha.us.repo.voidlinux.org/current/nonfree" >> /etc/xbps.d/xbps.conf
-   echo "repository=http://alpha.us.repo.voidlinux.org/current/multilib" >> /etc/xbps.d/xbps.conf
-   echo "repository=http://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /etc/xbps.d/xbps.conf
-   XBPS_ARCH=x86_64 xbps-install -Sy -r /mnt base-system
-   arch-chroot /mnt xbps-install -Sy linux-firmware grub-x86_64-efi grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
-   #arch-chroot /mnt xbps-reconfigure --force linux<x>.<y>
+   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-x86_64-efi"; else grub="grub"; fi
+   wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
+   tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt
+   echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf
+   echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf
+   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf
+   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
+   echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
+   arch-chroot /mnt ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+   arch-chroot /mnt dhcpcd
+   arch-chroot /mnt xbps-install -Suy xbps
+   arch-chroot /mnt xbps-install -uy
+   arch-chroot /mnt xbps-install -y base-system
+   arch-chroot /mnt xbps-remove -y base-voidstrap
+   arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
+   arch-chroot /mnt xbps-reconfigure -fa
+   #*microcode?*
+   #*kernel?*
 else
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
@@ -224,7 +232,12 @@ fi
 #Set localization stuff
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
-if [[ $distro != "debian" ]]; then set_locale; fi
+if [[ $distro == "fedora" ]] || [[ $distro == "arch" ]]; then set_locale; fi
+if [[ $distro == "void" ]]; then
+   echo "en_US.UTF-8 UTF-8" > /mnt/etc/default/libc-locales
+   arch-chroot /mnt xbps-reconfigure -f glibc-locales
+   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+fi
 
 #Add btrfs to HOOKS
 if [[ $distro = "arch" ]]; then
@@ -258,7 +271,7 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
-   arch-chroot /mnt grub-install --target=i386-pc --bootloader-id=GRUB --recheck /dev/$DISKNAME
+   arch-chroot /mnt grub-install /dev/$DISKNAME
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
