@@ -30,7 +30,6 @@ Future:
 
 Known bugs:
 - Can't use NVMe drives with EFI boot
-- Might have to resize cow space (I'm not sure why). https://ostechnix.com/adjust-size-root-partition-live-arch-linux/
-- Minimum 2GB of memory required
+- Minimum 2GB of memory required when installing Fedora
 
 If this script doesn't work for your hardware create an issue. I can't test everything, but I'd like as much hardware as possible to work.
