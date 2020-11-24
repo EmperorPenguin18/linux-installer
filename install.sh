@@ -224,7 +224,6 @@ elif [[ $distro = "fedora" ]]; then
    arch-chroot /mnt make -C OpenDoas
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
-   #*kernel?*
    #*microcode?*
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
@@ -246,7 +245,6 @@ elif [[ $distro = "void" ]]; then
    arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
    arch-chroot /mnt xbps-reconfigure -fa
    #*microcode?*
-   #*kernel?*
 else
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
