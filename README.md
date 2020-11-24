@@ -14,7 +14,7 @@ Features:
 - SSDs and HDDs
 - GRUB as bootloader
 - Full encrypted disk
-- Performance kernels
+- Performance kernels when available
 - doas used instead of sudo
 
 How to use:
