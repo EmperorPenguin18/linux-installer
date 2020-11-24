@@ -210,7 +210,7 @@ elif [[ $distro = "fedora" ]]; then
    losetup -d $DEVICE
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
-   arch-chroot /media dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True basesystem
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True basesystem
    exit 1 #debug
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel-ucode"; else cpu="linux-firmware-amd"; fi
