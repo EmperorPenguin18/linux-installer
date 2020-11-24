@@ -199,9 +199,19 @@ if [[ $distro = "debian" ]]; then
    #*noninteractive*
    #*microcode?*
 elif [[ $distro = "fedora" ]]; then
-   yay_install
-   sudo -u nobody yay -S dnf --noconfirm
-   dnf install --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --assumeyes --nodocs #systemd dnf glibc-langpack-en passwd rtkit policycoreutils NetworkManager audit firewalld selinux-policy-targeted kbd zchunk sudo vim-minimal systemd-udev rootfiles less iputils deltarpm sqlite lz4 xfsprogs
+   if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
+   wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | cut -d '"' -f 4) | xzcat >fedora.img
+   DEVICE=$(losetup --show -fP fedora.img)
+   mkdir -p /loop
+   mount $(echo $DEVICE)p1 /loop
+   mkdir /media
+   cp -ax /loop /media
+   umount /loop
+   losetup -d $DEVICE
+   rm fedora.img
+   mount -o bind /mnt /media/loop/mnt
+   arch-chroot /media dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True basesystem
+   exit 1 #debug
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel-ucode"; else cpu="linux-firmware-amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
