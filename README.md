@@ -26,7 +26,7 @@ How to use:
 
 Future:
 - Support ARM processors (single-board computers, new macbooks)
-- Add openSUSE and gentoo
+- Add openSUSE, gentoo and bedrock
 
 Known bugs:
 - Can't use NVMe drives with EFI boot
