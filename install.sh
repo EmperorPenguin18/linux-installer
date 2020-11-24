@@ -200,6 +200,9 @@ if [[ $distro = "debian" ]]; then
    #*noninteractive*
    #*microcode?*
 elif [[ $distro = "fedora" ]]; then
+   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
+   if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; fi
+   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-x64"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
    wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | cut -d '"' -f 4) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
@@ -211,10 +214,20 @@ elif [[ $distro = "fedora" ]]; then
    losetup -d $DEVICE
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem
-   exit 1 #debug
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison #dnf dhcpcd
+   arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
+   arch-chroot /mnt make install -C grub-btrfs
+   rm -r /mnt/grub-btrfs
+   arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
+   arch-chroot /mnt OpenDoas/configure
+   mv /mnt/config.* /mnt/OpenDoas/
+   arch-chroot /mnt make -C OpenDoas
+   arch-chroot /mnt make install -C OpenDoas
+   rm -r /mnt/OpenDoas
+   #*kernel?*
+   #*microcode?*
 elif [[ $distro = "void" ]]; then
-   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="intel-ucode"; else cpu="linux-firmware-amd"; fi
+   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub-x86_64-efi"; else grub="grub"; fi
    wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
