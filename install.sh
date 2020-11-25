@@ -204,7 +204,7 @@ elif [[ $distro = "fedora" ]]; then
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-x64"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | cut -d '"' -f 4) | xzcat >fedora.img
+   wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | awk -F "\"" '{print $2}') | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
    mkdir -p /loop
    mount $(echo $DEVICE)p1 /loop
