@@ -201,8 +201,8 @@ if [[ $distro = "debian" ]]; then
    #*microcode?*
 elif [[ $distro = "fedora" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
-   if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-x64"; else grub="grub2-pc"; fi
+   if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
+   if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi-x64"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
    wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | awk -F "\"" '{print $2}') | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
