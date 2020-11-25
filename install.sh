@@ -214,7 +214,8 @@ elif [[ $distro = "fedora" ]]; then
    losetup -d $DEVICE
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison #dnf dhcpcd
+   sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu wpa_supplicant dhcpcd iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison #dhcpcd
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
