@@ -204,7 +204,7 @@ elif [[ $distro = "fedora" ]]; then
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi-x64"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep raw.xz | awk -F "\"" '{print $2}') | xzcat >fedora.img
+   wget -O - https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://download.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-Rawhide-.*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
    mkdir -p /loop
    mount $(echo $DEVICE)p1 /loop
@@ -215,7 +215,7 @@ elif [[ $distro = "fedora" ]]; then
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu wpa_supplicant dhcpcd iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison #dhcpcd
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu wpa_supplicant dhcpcd iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
