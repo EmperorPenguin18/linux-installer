@@ -297,6 +297,7 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
    if [[ $BOOTTYPE = "efi" ]]; then
+      arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
       arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
    else
       arch-chroot /mnt grub2-install /dev/$DISKNAME
