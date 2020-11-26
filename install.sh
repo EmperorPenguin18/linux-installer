@@ -215,7 +215,7 @@ elif [[ $distro = "fedora" ]]; then
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en passwd kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu wpa_supplicant dhcpcd iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en passwd kernel linux-firmware $grub efibootmgr os-prober btrfs-progs dosfstools $cpu iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel bison
    arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    arch-chroot /mnt make install -C grub-btrfs
    rm -r /mnt/grub-btrfs
@@ -292,12 +292,13 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
+if [[ $distro = "fedora" ]]; then two="2"; fi
 if [[ $BOOTTYPE = "efi" ]]; then
-   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt grub$(echo $two)-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
-   arch-chroot /mnt grub-install /dev/$DISKNAME
+   arch-chroot /mnt grub$(echo $two)-install /dev/$DISKNAME
 fi
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+arch-chroot /mnt grub$(echo $two)-mkconfig -o /boot/grub/grub.cfg
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
