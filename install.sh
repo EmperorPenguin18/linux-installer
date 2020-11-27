@@ -193,16 +193,7 @@ if [[ $distro = "debian" ]]; then
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git build-essential bison
-   arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
-   arch-chroot /mnt make install -C grub-btrfs
-   rm -r /mnt/grub-btrfs
-   arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
-   arch-chroot /mnt OpenDoas/configure
-   mv /mnt/config.* /mnt/OpenDoas/
-   arch-chroot /mnt make -C OpenDoas
-   arch-chroot /mnt make install -C OpenDoas
-   rm -r /mnt/OpenDoas
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
    arch-chroot /mnt dpkg-reconfigure linux-xanmod-edge $grub
@@ -225,17 +216,8 @@ elif [[ $distro = "fedora" ]]; then
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager make automake gcc gcc-c++ kernel-devel byacc
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
    cp /etc/resolv.conf /mnt/etc/resolv.conf
-   #arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
-   #arch-chroot /mnt make install -C grub-btrfs
-   #rm -r /mnt/grub-btrfs
-   arch-chroot /mnt git clone https://github.com/Duncaen/OpenDoas
-   arch-chroot /mnt OpenDoas/configure
-   mv /mnt/config.* /mnt/OpenDoas/
-   arch-chroot /mnt make -C OpenDoas
-   arch-chroot /mnt make install -C OpenDoas
-   rm -r /mnt/OpenDoas
    arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
    arch-chroot /mnt dnf install -y kernel $grub passwd linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu git $virtual
    #*microcode?*
@@ -302,7 +284,9 @@ printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
-echo "permit persist $user" > /mnt/etc/doas.conf
+if [[ $distro = "arch" ]] || [[ $distro = "void" ]]
+   echo "permit persist $user" > /mnt/etc/doas.conf
+fi
 
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
@@ -310,14 +294,14 @@ if [[ $distro = "fedora" ]]; then
       arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
       arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
    else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME
+      arch-chroot /mnt grub2-install /dev/$DISKNAME2
       arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
    fi
 else
    if [[ $BOOTTYPE = "efi" ]]; then
       arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
    else
-      arch-chroot /mnt grub-install /dev/$DISKNAME
+      arch-chroot /mnt grub-install /dev/$DISKNAME2
    fi
    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 fi
