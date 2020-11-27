@@ -81,7 +81,7 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-wipefs -a /dev/$DISKNAME
+wipefs -a -f /dev/$DISKNAME
 dd if=/dev/zero of=/dev/$DISKNAME bs=512 count=1
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
@@ -130,8 +130,8 @@ else
 fi
 
 #Format partitions
-if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F32 /dev/$(echo $DISKNAME2)1; fi
-mkfs.btrfs /dev/$ROOTNAME
+if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F32 -f /dev/$(echo $DISKNAME2)1; fi
+mkfs.btrfs -f /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
    swapon /dev/$SWAPNAME
