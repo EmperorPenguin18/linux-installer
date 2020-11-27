@@ -53,7 +53,7 @@ echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget wipe --noconfirm --needed &>/dev/null
 timedatectl set-ntp true
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
@@ -81,8 +81,8 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-wipefs -a -f /dev/$DISKNAME
-dd if=/dev/zero of=/dev/$DISKNAME bs=512 count=1
+umount -l /mnt
+wipe -r /dev/$DISKNAME
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -284,9 +284,7 @@ printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
-if [[ $distro = "arch" ]] || [[ $distro = "void" ]]
-   echo "permit persist $user" > /mnt/etc/doas.conf
-fi
+if [[ $distro = "arch" ]] || [[ $distro = "void" ]] && echo "permit persist $user" > /mnt/etc/doas.conf; fi
 
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
@@ -294,14 +292,14 @@ if [[ $distro = "fedora" ]]; then
       arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
       arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
    else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME2
+      arch-chroot /mnt grub2-install /dev/$DISKNAME
       arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
    fi
 else
    if [[ $BOOTTYPE = "efi" ]]; then
       arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
    else
-      arch-chroot /mnt grub-install /dev/$DISKNAME2
+      arch-chroot /mnt grub-install /dev/$DISKNAME
    fi
    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 fi
