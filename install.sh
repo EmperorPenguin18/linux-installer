@@ -214,7 +214,7 @@ elif [[ $distro = "fedora" ]]; then
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi grub2-efi-modules shim"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
+   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
    mkdir -p /loop
    mount $(echo $DEVICE)p1 /loop
