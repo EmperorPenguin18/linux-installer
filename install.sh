@@ -130,7 +130,7 @@ else
 fi
 
 #Format partitions
-if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F32 -f /dev/$(echo $DISKNAME2)1; fi
+if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1; fi
 mkfs.btrfs -f /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
