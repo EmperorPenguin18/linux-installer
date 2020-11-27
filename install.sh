@@ -225,7 +225,7 @@ elif [[ $distro = "fedora" ]]; then
    arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
    cp /etc/resolv.conf /mnt/etc/resolv.conf
    arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
-   arch-chroot /mnt dnf install -y kernel $grub passwd linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu git $virtual
+   arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu git $virtual
    #*microcode?*
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
@@ -290,7 +290,9 @@ printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
-if [[ $distro = "arch" ]] || [[ $distro = "void" ]] && echo "permit persist $user" > /mnt/etc/doas.conf; fi
+if [ "$distro" = "arch" ] || [ "$distro" = "void" ]; then
+   echo "permit persist $user" > /mnt/etc/doas.conf
+fi
 
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
