@@ -53,7 +53,7 @@ echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget wipe --noconfirm --needed &>/dev/null
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
 timedatectl set-ntp true
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
@@ -81,8 +81,10 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-umount -l /mnt
-wipe -r /dev/$DISKNAME
+umount /mnt/boot
+umount /mnt
+sgdisk --zap-all /dev/$DISKNAME
+wipefs -a /dev/$DISKNAME
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -130,8 +132,12 @@ else
 fi
 
 #Format partitions
-if [[ $BOOTTYPE = "efi" ]]; then mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1; fi
-mkfs.btrfs -f /dev/$ROOTNAME
+if [[ $BOOTTYPE = "efi" ]]; then
+   wipefs -a /dev/$(echo $DISKNAME2)1
+   mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
+fi
+wipefs -a /dev/$ROOTNAME
+mkfs.btrfs /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
    swapon /dev/$SWAPNAME
