@@ -81,10 +81,10 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-umount /mnt/boot
-umount /mnt
-sgdisk --zap-all /dev/$DISKNAME
-wipefs -a /dev/$DISKNAME
+#umount /mnt/boot
+#umount /mnt
+#sgdisk --zap-all /dev/$DISKNAME
+#wipefs -a /dev/$DISKNAME
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -133,10 +133,10 @@ fi
 
 #Format partitions
 if [[ $BOOTTYPE = "efi" ]]; then
-   wipefs -a /dev/$(echo $DISKNAME2)1
+   #wipefs -a /dev/$(echo $DISKNAME2)1
    mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
 fi
-wipefs -a /dev/$ROOTNAME
+#wipefs -a /dev/$ROOTNAME
 mkfs.btrfs /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
@@ -297,13 +297,15 @@ fi
 
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
-   if [[ $BOOTTYPE = "efi" ]]; then
-      arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-      arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
-   else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME
-      arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
-   fi
+   arch-chroot /mnt bootctl install
+   arch-chroot /mnt efibootmgr -d /dev/$DISKNAME -p 1 -c -L "Fedora" -l /EFI/systemd/systemd-bootx64.efi
+   #if [[ $BOOTTYPE = "efi" ]]; then
+   #   arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+   #   arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+   #else
+   #   arch-chroot /mnt grub2-install /dev/$DISKNAME
+   #   arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
+   #fi
 else
    if [[ $BOOTTYPE = "efi" ]]; then
       arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
