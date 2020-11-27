@@ -204,7 +204,7 @@ elif [[ $distro = "fedora" ]]; then
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi grub2-efi-modules shim"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/development/rawhide/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-Rawhide-.*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
+   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-Rawhide-.*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
    mkdir -p /loop
    mount $(echo $DEVICE)p1 /loop
@@ -215,7 +215,7 @@ elif [[ $distro = "fedora" ]]; then
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source passwd kernel linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu iputils NetworkManager git $virtual make automake gcc gcc-c++ kernel-devel byacc
+   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager make automake gcc gcc-c++ kernel-devel byacc
    cp /etc/resolv.conf /mnt/etc/resolv.conf
    #arch-chroot /mnt git clone https://github.com/Antynea/grub-btrfs
    #arch-chroot /mnt make install -C grub-btrfs
@@ -227,7 +227,7 @@ elif [[ $distro = "fedora" ]]; then
    arch-chroot /mnt make install -C OpenDoas
    rm -r /mnt/OpenDoas
    arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
-   arch-chroot /mnt dnf install -y $grub
+   arch-chroot /mnt dnf install -y kernel $grub passwd linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu git $virtual
    #*microcode?*
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
@@ -318,3 +318,5 @@ echo "-------------------------------------------------"
 
 #*Undo changes to host*
 #*Encrypted disk*
+#*Wipe disk*
+#*Check network*
