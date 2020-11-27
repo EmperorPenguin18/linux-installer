@@ -39,6 +39,12 @@ if [ $(ls /usr/bin | grep pacman | wc -l) -lt 1 ]; then
    echo "This is not an Arch system"
    exit 1
 fi
+if ping -q -c 1 -W 1 google.com >/dev/null; then
+  echo "The network is up"
+else
+  echo "The network is down"
+  exit 1
+fi
 
 #Prepare for installation
 clear
@@ -49,14 +55,14 @@ echo "Please answer the following questions to begin:"
 echo
 pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
 timedatectl set-ntp true
-DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
+DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
-distro=$(echo -e "Arch\nDebian\nFedora\nVoid" | fzf --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
+distro=$(echo -e "Arch\nDebian\nFedora\nVoid" | fzf -i --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
 clear
 rm -rf /usr/share/zoneinfo/right
 rm -rf /usr/share/zoneinfo/posix
-time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf --prompt "Choose a timezone. >" --layout reverse)
+time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf -i --prompt "Choose a timezone. >" --layout reverse)
 clear
 read -p "What will the hostname of this computer be? >" host
 read -s -p "Enter the root password. >" rpass
@@ -70,9 +76,13 @@ echo
 read -s -p "Confirm user password. >" upass_check
 echo
 if [ "${upass}" != "${upass_check}" ]; then echo "Passwords do not match"; exit 1; fi
+read -p "This will delete all data on selected storage device. Are you sure you want to continue? [y/N] " sure
+if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
+wipefs -a /dev/$DISKNAME
+dd if=/dev/zero of=/dev/$DISKNAME bs=512 count=1
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -204,7 +214,7 @@ elif [[ $distro = "fedora" ]]; then
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
    if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi grub2-efi-modules shim"; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-Rawhide-.*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
+   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | grep -o Fedora-Cloud-Base-*.raw.xz | cut -d '"' -f 1) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
    mkdir -p /loop
    mount $(echo $DEVICE)p1 /loop
@@ -318,5 +328,3 @@ echo "-------------------------------------------------"
 
 #*Undo changes to host*
 #*Encrypted disk*
-#*Wipe disk*
-#*Check network*
