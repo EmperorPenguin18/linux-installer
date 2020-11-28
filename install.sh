@@ -297,8 +297,8 @@ fi
 
 #Create bootloader
 if [[ $distro = "fedora" ]]; then
-   arch-chroot /mnt bootctl install
-   arch-chroot /mnt efibootmgr -d /dev/$DISKNAME -p 1 -c -L "Fedora" -l /EFI/systemd/systemd-bootx64.efi
+   arch-chroot /mnt bootctl --path=/boot install
+   #arch-chroot /mnt efibootmgr -d /dev/$DISKNAME -p 1 -c -L "Fedora" -l /EFI/systemd/systemd-bootx64.efi
    #if [[ $BOOTTYPE = "efi" ]]; then
    #   arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
    #   arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
