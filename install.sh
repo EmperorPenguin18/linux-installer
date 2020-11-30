@@ -208,13 +208,10 @@ if [[ $distro = "debian" ]]; then
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
    arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
    arch-chroot /mnt apt purge -y nano vim-common
    arch-chroot /mnt apt upgrade -y
    arch-chroot /mnt dpkg-reconfigure linux-xanmod-edge $grub
-   #*efi*
-   #*noninteractive*
-   #*microcode?*
 elif [[ $distro = "fedora" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
@@ -232,10 +229,8 @@ elif [[ $distro = "fedora" ]]; then
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
    arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
-   #cp /etc/resolv.conf /mnt/etc/resolv.conf
    arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
-   arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware efibootmgr os-prober btrfs-progs dosfstools $cpu git $virtual
-   #*microcode?*
+   arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
 elif [[ $distro = "void" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
@@ -255,7 +250,6 @@ elif [[ $distro = "void" ]]; then
    arch-chroot /mnt xbps-remove -y base-voidstrap
    arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
    arch-chroot /mnt xbps-reconfigure -fa
-   #*microcode?*
 else
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
    if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
@@ -311,9 +305,9 @@ if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
       #echo "timeout  4" >> /mnt/boot/loader/loader.conf
       #echo "editor   no" >> /mnt/boot/loader/loader.conf
       echo "title $distro" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "linux /$(ls /boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "initrd   /$(ls /boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "options  root=UUID=$UUID2 rootfstype=btrfs rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+      echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+      echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+      echo "options  root=UUID=$UUID2 rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    else
       arch-chroot /mnt grub2-install /dev/$DISKNAME
       arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
