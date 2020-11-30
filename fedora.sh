@@ -61,7 +61,6 @@ arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
 
 #Install packages
 arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
-arch-chroot /mnt dnf reinstall kernel-core $grub
 
 #Set time
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
@@ -82,11 +81,13 @@ arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 
 #Create bootloader
+arch-chroot /mnt dnf reinstall -y kernel-core $grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt bootctl install
    echo "default  fedora.conf" > /mnt/boot/loader/loader.conf
    echo "timeout  4" >> /mnt/boot/loader/loader.conf
    echo "editor   no" >> /mnt/boot/loader/loader.conf
+   rm /mnt/boot/loader/entries/*
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/fedora.conf
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/fedora.conf
