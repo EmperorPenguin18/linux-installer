@@ -1,12 +1,5 @@
 #!/bin/bash
 
-set_locale()
-{
-   echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
-   arch-chroot /mnt locale-gen
-   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
-}
-
 #yay_install()
 #{
 #   pth=$(pwd)
@@ -195,139 +188,19 @@ fi
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Sy
 
-#Install packages
+#Install distro
 virtual=$(dmidecode -s system-product-name)
+chmod +x *.sh
 if [[ $distro = "debian" ]]; then
-   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2"; fi
-   pacman -S debootstrap debian-archive-keyring --noconfirm
-   debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian
-   sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
-   set_locale
-   sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
-   echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
-   arch-chroot /mnt apt update
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
-   arch-chroot /mnt apt purge -y nano vim-common
-   arch-chroot /mnt apt upgrade -y
-   arch-chroot /mnt dpkg-reconfigure linux-xanmod-edge $grub
+   ./debian.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME
 elif [[ $distro = "fedora" ]]; then
-   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
-   if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2-pc"; fi
-   if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
-   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
-   DEVICE=$(losetup --show -fP fedora.img)
-   mkdir -p /loop
-   mount $(echo $DEVICE)p1 /loop
-   mkdir /media
-   cp -ax /loop /media
-   umount /loop
-   losetup -d $DEVICE
-   rm fedora.img
-   mount -o bind /mnt /media/loop/mnt
-   sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
-   arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
-   arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
+   ./fedora.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 elif [[ $distro = "void" ]]; then
-   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
-   if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-x86_64-efi"; else grub="grub"; fi
-   wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
-   tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt
-   echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
-   echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
-   arch-chroot /mnt ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
-   arch-chroot /mnt dhcpcd
-   arch-chroot /mnt xbps-install -Suy xbps
-   arch-chroot /mnt xbps-install -uy
-   arch-chroot /mnt xbps-install -y base-system
-   arch-chroot /mnt xbps-remove -y base-voidstrap
-   arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
-   arch-chroot /mnt xbps-reconfigure -fa
+   ./void.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 else
-   if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd"; fi
-   if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-guest-utils virtualbox-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
-   pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $cpu)-ucode opendoas networkmanager git $virtual
+   ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 fi
 #*Distro*
-
-#Set localization stuff
-ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
-arch-chroot /mnt hwclock --systohc
-if [[ $distro == "arch" ]]; then set_locale; fi
-if [[ $distro == "void" ]]; then
-   echo "en_US.UTF-8 UTF-8" > /mnt/etc/default/libc-locales
-   arch-chroot /mnt xbps-reconfigure -f glibc-locales
-   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
-fi
-
-#Add btrfs to HOOKS
-if [[ $distro = "arch" ]]; then
-   echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
-   echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
-   echo "FILES=()" >> /mnt/etc/mkinitcpio.conf
-   echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
-   arch-chroot /mnt mkinitcpio -P
-fi
-
-#Network stuff
-echo $host > /mnt/etc/hostname
-echo "127.0.0.1   localhost" > /mnt/etc/hosts
-echo "::1   localhost" >> /mnt/etc/hosts
-echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
-if [[ $distro != "void" ]]; then
-   arch-chroot /mnt systemctl enable NetworkManager
-else
-   arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
-fi
-
-#Create root password
-printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
-
-#Create user
-arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
-if [ "$distro" = "arch" ] || [ "$distro" = "void" ]; then
-   echo "permit persist $user" > /mnt/etc/doas.conf
-fi
-
-#Create bootloader
-if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
-   if [[ $BOOTTYPE = "efi" ]]; then
-      arch-chroot /mnt bootctl install
-      #echo "default  $(echo $distro).conf" > /mnt/boot/loader/loader.conf
-      #echo "timeout  4" >> /mnt/boot/loader/loader.conf
-      #echo "editor   no" >> /mnt/boot/loader/loader.conf
-      echo "title $distro" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-      echo "options  root=UUID=$UUID2 rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-   else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME
-      arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
-   fi
-   #arch-chroot /mnt efibootmgr -d /dev/$DISKNAME -p 1 -c -L "Fedora" -l /EFI/systemd/systemd-bootx64.efi
-   #if [[ $BOOTTYPE = "efi" ]]; then
-   #   arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-   #   arch-chroot /mnt grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
-   #else
-   #   arch-chroot /mnt grub2-install /dev/$DISKNAME
-   #   arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
-   #fi
-else
-   if [[ $BOOTTYPE = "efi" ]]; then
-      arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-   else
-      arch-chroot /mnt grub-install /dev/$DISKNAME
-   fi
-   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-fi
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
