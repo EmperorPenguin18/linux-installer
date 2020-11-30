@@ -1,5 +1,23 @@
 #!/bin/bash
 
+#       _,met$$$$$gg.
+#    ,g$$$$$$$$$$$$$$$P.
+#  ,g$$P"     """Y$$.".
+# ,$$P'              `$$$.
+#',$$P       ,ggs.     `$$b:
+#`d$$'     ,$P"'   .    $$$
+# $$P      d$'     ,    $$P
+# $$:      $$.   -    ,d$$'
+# $$;      Y$b._   _,d$P'
+# Y$$.    `.`"Y$$$$P"'
+# `$$b      "-.__
+#  `Y$$
+#   `Y$$.
+#     `$$b.
+#       `Y$$b.
+#          `"Y$b._
+#              `"""
+
 BOOTTYPE=$1
 time=$2
 host=$3
@@ -8,27 +26,41 @@ upass=$5
 user=$6
 DISKNAME=$7
 
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
-if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2"; fi
+#Set variables
+if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
+   cpu="iucode-tool intel"
+else
+   cpu="amd64"
+fi
+if [[ $BOOTTYPE = "efi" ]]; then
+   grub=""
+else
+   grub="grub2"
+fi
+
+#Install base system to mounted disk
 pacman -S debootstrap debian-archive-keyring --noconfirm
 debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian
 sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
 arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales
 
+#Set locale
 echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
+#Install packages
 sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
 echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
 arch-chroot /mnt apt update
 arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
 
+#Clean up install
 arch-chroot /mnt apt purge -y nano vim-common
 arch-chroot /mnt apt upgrade -y
 arch-chroot /mnt dpkg-reconfigure linux-xanmod-edge $grub
 
-#Set localization stuff
+#Set time
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
 
