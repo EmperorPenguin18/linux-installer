@@ -59,7 +59,7 @@ arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-pro
 #Clean up install
 arch-chroot /mnt apt purge -y nano vim-common
 arch-chroot /mnt apt upgrade -y
-arch-chroot /mnt dpkg-reconfigure $(dpkg-query -l | grep linux-image | awk '{print $2}') $grub
+arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-image | awk '{print $2}') $grub
 
 #Set time
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
@@ -88,7 +88,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Debian" > /mnt/boot/loader/entries/debian.conf
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/debian.conf
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf
-   echo "options  root=\"UUID=$UUID\" ro" >> /mnt/boot/loader/entries/debian.conf
+   echo "options  root=UUID=\"$UUID\" ro" >> /mnt/boot/loader/entries/debian.conf
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
    arch-chroot /mnt grub-mkconfig -o /boot/grub2/grub.cfg
