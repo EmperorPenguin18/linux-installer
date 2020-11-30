@@ -192,9 +192,9 @@ pacman -Sy
 virtual=$(dmidecode -s system-product-name)
 chmod +x *.sh
 if [[ $distro = "debian" ]]; then
-   ./debian.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME
+   ./debian.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $UUID2
 elif [[ $distro = "fedora" ]]; then
-   ./fedora.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
+   ./fedora.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual $UUID2
 elif [[ $distro = "void" ]]; then
    ./void.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 else
