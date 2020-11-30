@@ -28,8 +28,11 @@ Future:
 - Support ARM processors (single-board computers, new macbooks)
 - Add openSUSE, gentoo and bedrock
 
-Known bugs:
-- Can't use NVMe drives with EFI boot
+Known issues:
+- Can't use NVMe drives with Legacy boot
 - Minimum 2GB of memory required when installing Fedora
+- Must be installed on completely empty unused drive
+- No microcode .img on non-arch distros
+- No Legacy boot on Fedora and Debian
 
 If this script doesn't work for your hardware create an issue. I can't test everything, but I'd like as much hardware as possible to work.
