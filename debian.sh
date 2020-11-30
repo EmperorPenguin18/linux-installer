@@ -88,7 +88,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Debian" > /mnt/boot/loader/entries/debian.conf
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/debian.conf
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf
-   echo "options  root=UUID=\"$UUID\" ro" >> /mnt/boot/loader/entries/debian.conf
+   echo "options  root=UUID=\"$UUID\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
    arch-chroot /mnt grub-mkconfig -o /boot/grub2/grub.cfg
