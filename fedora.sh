@@ -86,7 +86,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Fedora" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-   echo "options  root=UUID=$UUID rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+   echo "options  root=UUID=\"$UUID\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
