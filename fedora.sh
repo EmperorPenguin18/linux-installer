@@ -26,6 +26,7 @@ upass=$5
 user=$6
 DISKNAME=$7
 virtual=$8
+UUID=$9
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
@@ -85,7 +86,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Fedora" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
-   echo "options  root=UUID=$UUID2 rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+   echo "options  root=UUID=$UUID rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
