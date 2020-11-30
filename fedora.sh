@@ -1,5 +1,23 @@
 #!/bin/bash
 
+#          /:-------------:\
+#       :-------------------::
+#     :-----------/shhOHbmp---:\
+#   /-----------omMMMNNNMMD  ---:
+#  :-----------sMMMMNMNMP.    ---:
+# :-----------:MMMdP-------    ---\
+#,------------:MMMd--------    ---:
+#:------------:MMMd-------    .---:
+#:----    oNMMMMMMMMMNho     .----:
+#:--     .+shhhMMMmhhy++   .------/
+#:-    -------:MMMd--------------:
+#:-   --------/MMMd-------------;
+#:-    ------/hMMMy------------:
+#:-- :dMNdhhdNMMNo------------;
+#:---:sdNMMMMNds:------------:
+#:------:://:-------------::
+#:---------------------://
+
 BOOTTYPE=$1
 time=$2
 host=$3
@@ -9,9 +27,20 @@ user=$6
 DISKNAME=$7
 virtual=$8
 
+#Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
-if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
-if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2-pc"; fi
+if [[ $virtual = "KVM" ]]; then
+   virtual="qemu-guest-agent"
+else
+   virtual=""
+fi
+if [[ $BOOTTYPE = "efi" ]]; then
+   grub=""
+else
+   grub="grub2-pc"
+fi
+
+#Get DNF
 if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
 wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
 DEVICE=$(losetup --show -fP fedora.img)
@@ -22,13 +51,17 @@ cp -ax /loop /media
 umount /loop
 losetup -d $DEVICE
 rm fedora.img
+
+#Install the base system
 mount -o bind /mnt /media/loop/mnt
 sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
 arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
 arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
+
+#Install packages
 arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
 
-#Set localization stuff
+#Set time
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
 arch-chroot /mnt hwclock --systohc
 
@@ -49,7 +82,7 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 #Create bootloader
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt bootctl install
-   echo "title $distro" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
+   echo "title Fedora" > /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
    echo "options  root=UUID=$UUID2 rw" >> /mnt/boot/loader/entries/$(ls /mnt/boot/loader/entries)
