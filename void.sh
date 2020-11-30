@@ -1,5 +1,24 @@
 #!/bin/bash
 
+#                __.;=====;.__
+#            _.=+==++=++=+=+===;.
+#             -=+++=+===+=+=+++++=_
+#        .     -=:``     `--==+=++==.
+#       _vi,    `            --+=++++:
+#      .uvnvi.       _._       -==+==+.
+#     .vvnvnI`    .;==|==;.     :|=||=|.
+#+QmQQmpvvnv; _yYsyQQWUUQQQm #QmQ#:QQQWUV$QQm.
+# -QQWQWpvvowZ?.wQQQE==<QWWQ/QWQW.QQWW(: jQWQE
+#  -$QQQQmmU'  jQQQ@+=<QWQQ)mQQQ.mQQQC+;jWQQ@'
+#   -$WQ8YnI:   QWQQwgQQWV`mWQQ.jQWQQgyyWW@!
+#     -1vvnvv.     `~+++`        ++|+++
+#      +vnvnnv,                 `-|===
+#       +vnvnvns.           .      :=-
+#        -Invnvvnsi..___..=sv=.     `
+#          +Invnvnvnnnnnnnnvvnn;.
+#            ~|Invnvnvvnvvvnnv}+`
+#               -~|{*l}*|~
+
 BOOTTYPE=$1
 time=$2
 host=$3
@@ -9,9 +28,26 @@ user=$6
 DISKNAME=$7
 virtual=$8
 
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel-ucode"; else cpu="linux-firmware-amd"; fi
-if [[ $virtual = "VirtualBox" ]]; then virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"; elif [[ $virtual = "KVM" ]]; then virtual="qemu-ga"; else virtual=""; fi
-if [[ $BOOTTYPE = "efi" ]]; then grub="grub-x86_64-efi"; else grub="grub"; fi
+#Set variables
+if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
+   cpu="iucode-tool intel-ucode"
+else
+   cpu="linux-firmware-amd"
+fi
+if [[ $virtual = "VirtualBox" ]]; then
+   virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"
+elif [[ $virtual = "KVM" ]]; then
+   virtual="qemu-ga"
+else
+   virtual=""
+fi
+if [[ $BOOTTYPE = "efi" ]]; then
+   grub="grub-x86_64-efi"
+else
+   grub="grub"
+fi
+
+#Install the base system
 wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
 tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt
 echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf
@@ -25,6 +61,8 @@ arch-chroot /mnt xbps-install -Suy xbps
 arch-chroot /mnt xbps-install -uy
 arch-chroot /mnt xbps-install -y base-system
 arch-chroot /mnt xbps-remove -y base-voidstrap
+
+#Install packages
 arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
 arch-chroot /mnt xbps-reconfigure -fa
 
