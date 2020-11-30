@@ -7,28 +7,27 @@ set_locale()
    echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 }
 
-yay_install()
-{
-   pth=$(pwd)
-   pacman -S base-devel --needed --noconfirm
-   mkdir /home/build
-   chgrp nobody /home/build
-   chmod g+ws /home/build
-   setfacl -m u::rwx,g::rwx /home/build
-   setfacl -d --set u::rwx,g::rwx,o::- /home/build
-   usermod -d /home/build nobody
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/yay" >> /etc/sudoers
-   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
-   cd /home/build
-   sudo -u nobody git clone https://aur.archlinux.org/yay.git
-   chmod -R g+w yay/
-   cd yay
-   sudo -u nobody makepkg -si --noconfirm
-   cd ../
-   rm -r yay
-   cd $pth
-}
+#yay_install()
+#{
+#   pth=$(pwd)
+#   pacman -S base-devel --needed --noconfirm
+#   mkdir /home/build   chgrp nobody /home/build
+#   chmod g+ws /home/build
+#   setfacl -m u::rwx,g::rwx /home/build
+#   setfacl -d --set u::rwx,g::rwx,o::- /home/build
+#   usermod -d /home/build nobody
+#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/yay" >> /etc/sudoers
+#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
+#   cd /home/build
+#   sudo -u nobody git clone https://aur.archlinux.org/yay.git
+#   chmod -R g+w yay/
+#   cd yay
+#   sudo -u nobody makepkg -si --noconfirm
+#   cd ../
+#   rm -r yay
+#   cd $pth
+#}
 
 #Checks before starting
 if [[ $EUID -ne 0 ]]; then
@@ -160,14 +159,24 @@ mount -o subvol=_active/rootvol /dev/$ROOTNAME /mnt
 mkdir /mnt/{home,tmp,boot}
 mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
 if [[ $BOOTTYPE = "efi" ]]; then
-   mkdir /mnt/boot/efi
-   mount /dev/$(echo $DISKNAME2)1 /mnt/boot/efi
+   if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
+      mount /dev/$(echo $DISKNAME2)1 /mnt/boot
+   else
+      mkdir /mnt/boot/efi
+      mount /dev/$(echo $DISKNAME2)1 /mnt/boot/efi
+   fi
 fi
 mount -o subvol=_active/homevol /dev/$ROOTNAME /mnt/home
 
 #Generate FSTAB
 mkdir /mnt/etc
-if [[ $BOOTTYPE = "efi" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/efi   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab; fi
+if [[ $BOOTTYPE = "efi" ]]; then
+   if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
+      echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
+   else
+      echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/efi   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
+   fi
+fi
 UUID2=$(blkid -s UUID -o value /dev/$ROOTNAME)
 if [[ $swap != "n" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$SWAPNAME) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
 if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
@@ -190,7 +199,7 @@ pacman -Sy
 virtual=$(dmidecode -s system-product-name)
 if [[ $distro = "debian" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool intel"; else cpu="amd64"; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub="grub-efi-amd64"; else grub="grub2"; fi
+   if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2"; fi
    pacman -S debootstrap debian-archive-keyring --noconfirm
    debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
@@ -209,7 +218,7 @@ if [[ $distro = "debian" ]]; then
 elif [[ $distro = "fedora" ]]; then
    if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
    if [[ $virtual = "KVM" ]]; then virtual="qemu-guest-agent"; else virtual=""; fi
-   if [[ $BOOTTYPE = "efi" ]]; then grub="grub2-efi grub2-efi-modules shim"; else grub="grub2-pc"; fi
+   if [[ $BOOTTYPE = "efi" ]]; then grub=""; else grub="grub2-pc"; fi
    if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
    wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
    DEVICE=$(losetup --show -fP fedora.img)
@@ -222,7 +231,6 @@ elif [[ $distro = "fedora" ]]; then
    rm fedora.img
    mount -o bind /mnt /media/loop/mnt
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
-   arch-chroot /media/loop rpm --root=/mnt --initdb
    arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
    #cp /etc/resolv.conf /mnt/etc/resolv.conf
    arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
@@ -296,8 +304,20 @@ if [ "$distro" = "arch" ] || [ "$distro" = "void" ]; then
 fi
 
 #Create bootloader
-if [[ $distro = "fedora" ]]; then
-   arch-chroot /mnt bootctl --path=/boot install
+if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
+   if [[ $BOOTTYPE = "efi" ]]; then
+      arch-chroot /mnt bootctl install
+      echo "default  $(echo $distro).conf" > /mnt/boot/loader/loader.conf
+      echo "timeout  4" >> /mnt/boot/loader/loader.conf
+      echo "editor   no" >> /mnt/boot/loader/loader.conf
+      echo "title $distro" > /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "linux /$(ls /boot | grep vmlinuz)" > /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "initrd   /$(ls /boot | grep .img)" > /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "options  root=UUID=$UUID2 rootfstype=btrfs rw" > /mnt/boot/loader/entries/$(echo $distro).conf
+   else
+      arch-chroot /mnt grub2-install /dev/$DISKNAME
+      arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
+   fi
    #arch-chroot /mnt efibootmgr -d /dev/$DISKNAME -p 1 -c -L "Fedora" -l /EFI/systemd/systemd-bootx64.efi
    #if [[ $BOOTTYPE = "efi" ]]; then
    #   arch-chroot /mnt grub2-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
