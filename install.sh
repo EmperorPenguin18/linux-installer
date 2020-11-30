@@ -311,9 +311,9 @@ if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
       echo "timeout  4" >> /mnt/boot/loader/loader.conf
       echo "editor   no" >> /mnt/boot/loader/loader.conf
       echo "title $distro" > /mnt/boot/loader/entries/$(echo $distro).conf
-      echo "linux /$(ls /boot | grep vmlinuz)" > /mnt/boot/loader/entries/$(echo $distro).conf
-      echo "initrd   /$(ls /boot | grep .img)" > /mnt/boot/loader/entries/$(echo $distro).conf
-      echo "options  root=UUID=$UUID2 rootfstype=btrfs rw" > /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "linux /$(ls /boot | grep vmlinuz)" >> /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "initrd   /$(ls /boot | grep .img)" >> /mnt/boot/loader/entries/$(echo $distro).conf
+      echo "options  root=UUID=$UUID2 rootfstype=btrfs rw" >> /mnt/boot/loader/entries/$(echo $distro).conf
    else
       arch-chroot /mnt grub2-install /dev/$DISKNAME
       arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
