@@ -58,6 +58,7 @@ mount -o bind /mnt /media/loop/mnt
 sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
 arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
 arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
+rm -r /media/loop
 
 #Install packages
 arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
