@@ -89,13 +89,13 @@ if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt dnf reinstall -y kernel-core
    rm /mnt/boot/loader/entries/*
    rm /mnt/boot/loader/random-seed
-   find /mnt/boot -name "linux" -exec mv -t /mnt/boot {}
-   find /mnt/boot -name "initrd" -exec mv -t /mnt/boot {}
-   find /mnt/boot -name "*x86_64" -exec rmdir -p {}
+   find /mnt/boot -name "linux" -exec mv -t /mnt/boot {} +
+   find /mnt/boot -name "initrd" -exec mv -t /mnt/boot {} +
+   find /mnt/boot -name "*x86_64" -exec rmdir -p {} + 2>/dev/null
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
    echo "linux /linux" >> /mnt/boot/loader/entries/fedora.conf
    echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
-   echo "options  root=UUID=\"$UUID\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
+   echo "options  root=UUID=$UUID rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
