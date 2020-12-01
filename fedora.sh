@@ -81,16 +81,20 @@ arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 
 #Create bootloader
-arch-chroot /mnt dnf reinstall -y kernel-core $grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt bootctl install
    echo "default  fedora.conf" > /mnt/boot/loader/loader.conf
    echo "timeout  4" >> /mnt/boot/loader/loader.conf
    echo "editor   no" >> /mnt/boot/loader/loader.conf
+   arch-chroot /mnt dnf reinstall -y kernel-core
    rm /mnt/boot/loader/entries/*
+   rm /mnt/boot/loader/random-seed
+   find /mnt/boot -name "linux" -exec mv -t /mnt/boot {}
+   find /mnt/boot -name "initrd" -exec mv -t /mnt/boot {}
+   find /mnt/boot -name "*x86_64" -exec rmdir -p {}
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
-   echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/fedora.conf
-   echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/fedora.conf
+   echo "linux /linux" >> /mnt/boot/loader/entries/fedora.conf
+   echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
    echo "options  root=UUID=\"$UUID\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
