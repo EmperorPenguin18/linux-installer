@@ -61,6 +61,7 @@ arch-chroot /mnt xbps-install -Suy xbps
 arch-chroot /mnt xbps-install -uy
 arch-chroot /mnt xbps-install -y base-system
 arch-chroot /mnt xbps-remove -y base-voidstrap
+rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
 arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
