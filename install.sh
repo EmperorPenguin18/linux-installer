@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 #Checks before starting
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
@@ -17,12 +19,12 @@ else
 fi
 
 #Prepare for installation
-clear
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
+pacman -Q | awk '{print $1}' > pre.txt
 pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
 timedatectl set-ntp true
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
@@ -30,8 +32,8 @@ clear
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
 distro=$(echo -e "Arch\nDebian\nFedora\nVoid" | fzf -i --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
 clear
-rm -rf /usr/share/zoneinfo/right
-rm -rf /usr/share/zoneinfo/posix
+mv /usr/share/zoneinfo/right /usr/share/right
+mv /usr/share/zoneinfo/posix /usr/share/posix
 time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf -i --prompt "Choose a timezone. >" --layout reverse)
 clear
 read -p "What will the hostname of this computer be? >" host
@@ -163,6 +165,7 @@ else
 fi
 
 #Configure mirrors
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Sy
 
@@ -179,9 +182,25 @@ else
    ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 fi
 
+#Clean up
+pacman -Q | awk '{print $1}' > post.txt
+pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}')
+rm pre.txt post.txt
+mv /usr/share/right /usr/share/zoneinfo/right
+mv /usr/share/posix /usr/share/zoneinfo/posix
+if [[ $BOOTTYPE = "efi" ]]; then
+   if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
+      umount /mnt/boot
+   else
+      umount /mnt/boot/efi
+   fi
+fi
+umount /mnt
+rm /etc/pacman.d/mirrorlist
+mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
+
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
 
-#*Undo changes to host*
 #*Encrypted disk*
