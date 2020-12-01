@@ -12,10 +12,8 @@ Features:
 - AMD and Intel x86_64 CPUs
 - Support for being installed inside VirtualBox and KVM/QEMU
 - SSDs and HDDs
-- GRUB as bootloader
 - Full encrypted disk
 - Performance kernels when available
-- doas used instead of sudo
 
 How to use:
 1. Must be run from an Arch environment. Latest live iso recommended.
