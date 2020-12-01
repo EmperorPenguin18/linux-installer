@@ -1,27 +1,5 @@
 #!/bin/bash
 
-#yay_install()
-#{
-#   pth=$(pwd)
-#   pacman -S base-devel --needed --noconfirm
-#   mkdir /home/build   chgrp nobody /home/build
-#   chmod g+ws /home/build
-#   setfacl -m u::rwx,g::rwx /home/build
-#   setfacl -d --set u::rwx,g::rwx,o::- /home/build
-#   usermod -d /home/build nobody
-#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
-#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/yay" >> /etc/sudoers
-#   echo "%nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
-#   cd /home/build
-#   sudo -u nobody git clone https://aur.archlinux.org/yay.git
-#   chmod -R g+w yay/
-#   cd yay
-#   sudo -u nobody makepkg -si --noconfirm
-#   cd ../
-#   rm -r yay
-#   cd $pth
-#}
-
 #Checks before starting
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 
@@ -200,7 +178,6 @@ elif [[ $distro = "void" ]]; then
 else
    ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 fi
-#*Distro*
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
