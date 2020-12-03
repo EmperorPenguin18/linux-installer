@@ -97,8 +97,8 @@ else
 fi
 
 #Encrypt stuff
-printf "YES\n$pass\n$pass\n" | cryptsetup luksFormat --type luks1 /dev/$ROOTNAME
-printf "$pass\n" | cryptsetup open /dev/$ROOTNAME cryptroot
+echo "$pass" | cryptsetup -q luksFormat --type luks1 /dev/$ROOTNAME
+echo "$pass" | cryptsetup open /dev/$ROOTNAME cryptroot
 ENCRYPTNAME=mapper/cryptroot
 
 #Format partitions
