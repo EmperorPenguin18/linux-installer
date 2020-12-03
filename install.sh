@@ -37,22 +37,18 @@ mv /usr/share/zoneinfo/posix /usr/share/posix
 time=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf -i --prompt "Choose a timezone. >" --layout reverse)
 clear
 read -p "What will the hostname of this computer be? >" host
-read -s -p "Enter the root password. >" rpass
-echo
-read -s -p "Confirm root password. >" rpass_check
-echo
-if [ "${rpass}" != "${rpass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 read -p "Enter your username. >" user
-read -s -p "Enter your user password. >" upass
+read -s -p "Enter your password. >" pass
 echo
-read -s -p "Confirm user password. >" upass_check
+read -s -p "Confirm password. >" pass_check
 echo
-if [ "${upass}" != "${upass_check}" ]; then echo "Passwords do not match"; exit 1; fi
+if [ "${pass}" != "${pass_check}" ]; then echo "Passwords do not match"; exit 1; fi
 read -p "This will delete all data on selected storage device. Are you sure you want to continue? [y/N] " sure
 if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
+echo "Wiping all data on disk..."
 dd if=/dev/zero of=/dev/$DISKNAME bs=4096 status=progress
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
@@ -101,8 +97,8 @@ else
 fi
 
 #Encrypt stuff
-cryptsetup luksFormat --type luks1 /dev/$ROOTNAME
-cryptsetup open /dev/$ROOTNAME cryptroot
+printf "YES\n$pass\n$pass\n" | cryptsetup luksFormat --type luks1 /dev/$ROOTNAME
+printf "$pass\n" | cryptsetup open /dev/$ROOTNAME cryptroot
 ENCRYPTNAME=mapper/cryptroot
 
 #Format partitions
@@ -170,21 +166,20 @@ reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mir
 pacman -Sy
 
 #Install distro
-virtual=$(dmidecode -s system-product-name)
 chmod +x *.sh
 if [[ $distro = "debian" ]]; then
-   ./debian.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $UUID2
+   ./debian.sh $BOOTTYPE $time $host $pass $user $DISKNAME $UUID2
 elif [[ $distro = "fedora" ]]; then
-   ./fedora.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual $UUID2
+   ./fedora.sh $BOOTTYPE $time $host $pass $user $DISKNAME $UUID2
 elif [[ $distro = "void" ]]; then
-   ./void.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
+   ./void.sh $BOOTTYPE $time $host $pass $user $DISKNAME
 else
-   ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual $ROOTNAME
+   ./arch.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 fi
 
 #Clean up
 pacman -Q | awk '{print $1}' > post.txt
-pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}')
+pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm
 rm pre.txt post.txt
 mv /usr/share/right /usr/share/zoneinfo/right
 mv /usr/share/posix /usr/share/zoneinfo/posix
@@ -202,5 +197,3 @@ mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
-
-#*Encrypted swap*
