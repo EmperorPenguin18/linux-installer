@@ -23,12 +23,11 @@
 BOOTTYPE=$1
 time=$2
 host=$3
-rpass=$4
-upass=$5
-user=$6
-DISKNAME=$7
-virtual=$8
-ROOTNAME=$9
+pass=$4
+user=$5
+DISKNAME=$6
+virtual=$(dmidecode -s system-product-name)
+ROOTNAME=$7
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
@@ -55,10 +54,10 @@ arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Create encryption key
-dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-chmod 600 /crypto_keyfile.bin
-chmod 600 /boot/initramfs-linux*
-cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+arch-chroot /mnt chmod 600 /boot/initramfs-linux*
+printf "$pass\n" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
@@ -75,15 +74,15 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
-echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
+echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
