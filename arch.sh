@@ -57,7 +57,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
 arch-chroot /mnt chmod 600 /boot/initramfs-linux*
-printf "$pass\n" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
