@@ -53,9 +53,7 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-#umount /mnt/boot &>/dev/null
-#umount /mnt &>/dev/null
-#dd if=/dev/zero of=/dev/$DISKNAME bs=4096 status=progress
+dd if=/dev/zero of=/dev/$DISKNAME bs=4096 status=progress
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -103,20 +101,20 @@ else
 fi
 
 #Encrypt stuff
-#cryptsetup luksFormat /dev/$ROOTNAME
-#cryptsetup open /dev/$ROOTNAME cryptroot
-#ROOTNAME=mapper/cryptroot
+cryptsetup luksFormat --type luks1 /dev/$ROOTNAME
+cryptsetup open /dev/$ROOTNAME cryptroot
+ENCRYPTNAME=mapper/cryptroot
 
 #Format partitions
 if [[ $BOOTTYPE = "efi" ]]; then
    mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
 fi
-mkfs.btrfs /dev/$ROOTNAME
+mkfs.btrfs /dev/$ENCRYPTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
    swapon /dev/$SWAPNAME
 fi
-mount /dev/$ROOTNAME /mnt
+mount /dev/$ENCRYPTNAME /mnt
 
 #BTRFS subvolumes
 pth=$(pwd)
@@ -130,9 +128,9 @@ cd $pth
 
 #Mount subvolumes for install
 umount /mnt
-mount -o subvol=_active/rootvol /dev/$ROOTNAME /mnt
+mount -o subvol=_active/rootvol /dev/$ENCRYPTNAME /mnt
 mkdir /mnt/{home,tmp,boot}
-mount -o subvol=_active/tmp /dev/$ROOTNAME /mnt/tmp
+mount -o subvol=_active/tmp /dev/$ENCRYPTNAME /mnt/tmp
 if [[ $BOOTTYPE = "efi" ]]; then
    if [ "$distro" = "fedora" ] || [ "$distro" = "debian" ]; then
       mount /dev/$(echo $DISKNAME2)1 /mnt/boot
@@ -141,7 +139,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
       mount /dev/$(echo $DISKNAME2)1 /mnt/boot/efi
    fi
 fi
-mount -o subvol=_active/homevol /dev/$ROOTNAME /mnt/home
+mount -o subvol=_active/homevol /dev/$ENCRYPTNAME /mnt/home
 
 #Generate FSTAB
 mkdir /mnt/etc
@@ -152,7 +150,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
       echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot/efi   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
    fi
 fi
-UUID2=$(blkid -s UUID -o value /dev/$ROOTNAME)
+UUID2=$(blkid -s UUID -o value /dev/$ENCRYPTNAME)
 if [[ $swap != "n" ]]; then echo UUID=$(blkid -s UUID -o value /dev/$SWAPNAME) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
 if [[ $(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l) -eq 1 ]]; then
    echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
@@ -181,7 +179,7 @@ elif [[ $distro = "fedora" ]]; then
 elif [[ $distro = "void" ]]; then
    ./void.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
 else
-   ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual
+   ./arch.sh $BOOTTYPE $time $host $rpass $upass $user $DISKNAME $virtual $ROOTNAME
 fi
 
 #Clean up
@@ -197,7 +195,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
       umount /mnt/boot/efi
    fi
 fi
-umount /mnt
+umount -A /dev/$ENCRYPTNAME
 rm /etc/pacman.d/mirrorlist
 mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
 
@@ -205,4 +203,4 @@ echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
 
-#*Encrypted disk*
+#*Encrypted swap*
