@@ -24,7 +24,7 @@ How to use:
 
 Future:
 - Support ARM processors (single-board computers, new macbooks)
-- Add openSUSE, gentoo and bedrock
+- Add openSUSE, gentoo, bedrock, alpine, and exherbo
 
 Known issues:
 - Can't use NVMe drives with Legacy boot
