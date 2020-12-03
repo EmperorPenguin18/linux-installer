@@ -28,6 +28,7 @@ upass=$5
 user=$6
 DISKNAME=$7
 virtual=$8
+ROOTNAME=$9
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
@@ -53,11 +54,17 @@ echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
-#Add btrfs to HOOKS
+#Create encryption key
+dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+chmod 600 /crypto_keyfile.bin
+chmod 600 /boot/initramfs-linux*
+cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+
+#Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
-echo "FILES=()" >> /mnt/etc/mkinitcpio.conf
-echo "HOOKS=(base udev autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
+echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
+echo "HOOKS=(base udev encrypt autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
 
 #Network stuff
@@ -76,6 +83,7 @@ printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create bootloader
+echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
