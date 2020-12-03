@@ -53,10 +53,9 @@ if [ "${sure}" != "y" ]; then exit 1; fi
 clear
 
 #Partition disk
-#umount /mnt/boot
-#umount /mnt
-#sgdisk --zap-all /dev/$DISKNAME
-#wipefs -a /dev/$DISKNAME
+#umount /mnt/boot &>/dev/null
+#umount /mnt &>/dev/null
+#dd if=/dev/zero of=/dev/$DISKNAME bs=4096 status=progress
 if [[ $(efibootmgr | wc -l) -gt 0 ]]; then
    BOOTTYPE="efi"
 else
@@ -103,12 +102,15 @@ else
       mkpart primary linux-swap $(expr $DISKSIZE - $MEMSIZE)GB $(echo $DISKSIZE)GB
 fi
 
+#Encrypt stuff
+#cryptsetup luksFormat /dev/$ROOTNAME
+#cryptsetup open /dev/$ROOTNAME cryptroot
+#ROOTNAME=mapper/cryptroot
+
 #Format partitions
 if [[ $BOOTTYPE = "efi" ]]; then
-   #wipefs -a /dev/$(echo $DISKNAME2)1
    mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
 fi
-#wipefs -a /dev/$ROOTNAME
 mkfs.btrfs /dev/$ROOTNAME
 if [[ $swap != "n" ]]; then
    mkswap /dev/$SWAPNAME
