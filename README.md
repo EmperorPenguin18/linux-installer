@@ -23,6 +23,7 @@ How to use:
 6. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
 
 Future:
+- Encrypt swap
 - Support ARM processors (single-board computers, new macbooks)
 - Add openSUSE, gentoo, bedrock, alpine, and exherbo
 
