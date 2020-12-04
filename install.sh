@@ -179,7 +179,7 @@ fi
 
 #Clean up
 pacman -Q | awk '{print $1}' > post.txt
-pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm
+pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm &>/dev/null
 rm pre.txt post.txt
 mv /usr/share/right /usr/share/zoneinfo/right
 mv /usr/share/posix /usr/share/zoneinfo/posix
