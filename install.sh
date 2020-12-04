@@ -168,11 +168,11 @@ pacman -Sy
 #Install distro
 chmod +x *.sh
 if [[ $distro = "debian" ]]; then
-   ./debian.sh $BOOTTYPE $time $host $pass $user $DISKNAME $UUID2
+   ./debian.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 elif [[ $distro = "fedora" ]]; then
-   ./fedora.sh $BOOTTYPE $time $host $pass $user $DISKNAME $UUID2
+   ./fedora.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 elif [[ $distro = "void" ]]; then
-   ./void.sh $BOOTTYPE $time $host $pass $user $DISKNAME
+   ./void.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 else
    ./arch.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 fi
