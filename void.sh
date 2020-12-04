@@ -65,7 +65,6 @@ rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
 arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
-arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
@@ -90,14 +89,17 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create encryption key
-arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/initramfs*
-echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+arch-chroot /mnt dd bs=1 count=64 if=/dev/urandom of=/boot/volume.key
+echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /boot/volume.key
+arch-chroot /mnt chmod 000 /boot/volume.key
+arch-chroot /mnt chmod -R g-rwx,o-rwx /boot
+echo "cryptroot /dev/$ROOTNAME /boot/volume.key luks" /mnt/etc/crypttab
+echo "install_items+=\" /boot/volume.key /etc/crypttab \"" > /mnt/etc/dracut.conf.d/10-crypt.conf
+arch-chroot /mnt xbps-reconfigure -fa
 
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
-echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"" >> /mnt/etc/default/grub
+echo "GRUB_CMDLINE_LINUX=\"rd.luks.uuid=$(blkid -s UUID -o value /dev/$ROOTNAME)\"" >> /mnt/etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
