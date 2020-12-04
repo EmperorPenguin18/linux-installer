@@ -22,7 +22,7 @@
 BOOTTYPE=$1
 time=$2
 host=$3
-rpass=$4
+pass=$4
 user=$5
 DISKNAME=$6
 virtual=$(dmidecode -s system-product-name)
@@ -64,7 +64,7 @@ arch-chroot /mnt xbps-remove -y base-voidstrap
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual
+arch-chroot /mnt xbps-install -Sy linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
 arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
@@ -92,12 +92,12 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 #Create encryption key
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/initramfs-linux*
+arch-chroot /mnt chmod 600 /boot/initramfs*
 echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Create bootloader
-sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /mnt/etc/default/grub
-sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"/g" /mnt/etc/default/grub
+echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
+echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"" >> /mnt/etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
