@@ -23,10 +23,10 @@ BOOTTYPE=$1
 time=$2
 host=$3
 rpass=$4
-upass=$5
-user=$6
-DISKNAME=$7
-virtual=$8
+user=$5
+DISKNAME=$6
+virtual=$(dmidecode -s system-product-name)
+ROOTNAME=$7
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
@@ -82,14 +82,22 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
 
 #Create root password
-printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
+#Create encryption key
+arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+arch-chroot /mnt chmod 600 /boot/initramfs-linux*
+echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+
 #Create bootloader
+sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /mnt/etc/default/grub
+sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"/g" /mnt/etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
