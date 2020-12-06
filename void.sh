@@ -103,7 +103,7 @@ echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
 echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
 echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /usr/lib/modules).img -k $(ls /usr/lib/modules)
+arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt/usr/lib/modules).img -k $(ls /mnt/usr/lib/modules)
 
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
