@@ -78,6 +78,15 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 
+#Create encryption key
+arch-chroot /mnt mkdir -m 0700 /etc/keys
+arch-chroot /mnt ( umask 0077 && dd if=/dev/urandom bs=1 count=64 of=/etc/keys/root.key conv=excl,fsync )
+arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/root.key
+echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/root.key luks,discard,key-slot=1" > /mnt/etc/crypttab
+echo "KEYFILE_PATTERN=\"/etc/keys/*.key\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook
+echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf
+arch-chroot /mnt update-initramfs -u
+
 #Create bootloader
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt bootctl install
@@ -87,7 +96,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Debian" > /mnt/boot/loader/entries/debian.conf
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/debian.conf
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf
-   echo "options  root=UUID=\"$(blkid -s UUID -o value /dev/$ROOTNAME)\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
+   echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
    arch-chroot /mnt grub-mkconfig -o /boot/grub2/grub.cfg
