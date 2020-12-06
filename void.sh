@@ -55,6 +55,7 @@ echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/et
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
+echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
 arch-chroot /mnt ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 arch-chroot /mnt dhcpcd
 arch-chroot /mnt xbps-install -Suy xbps
@@ -64,7 +65,7 @@ arch-chroot /mnt xbps-remove -y base-voidstrap sudo
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux linux-firmware $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
+arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
 arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
@@ -90,7 +91,6 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create encryption key
-arch-chroot /mnt xbps-remove -y dracut && arch-chroot /mnt xbps-install -y mkinitcpio mkinitcpio-encrypt
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
 arch-chroot /mnt chmod 600 /boot/initramfs-linux*
