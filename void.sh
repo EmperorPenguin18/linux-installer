@@ -48,8 +48,10 @@ else
 fi
 
 #Install the base system
+cp /mnt/etc/fstab fstab.bak
 wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
 tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt
+mv fstab.bak /mnt/etc/fstab
 echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf
 echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf
@@ -65,7 +67,7 @@ arch-chroot /mnt xbps-remove -y base-voidstrap sudo
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
+arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
 arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
@@ -93,15 +95,15 @@ echo "permit persist $user" > /mnt/etc/doas.conf
 #Create encryption key
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/initramfs-linux*
+arch-chroot /mnt chmod 600 /boot/initramfs*
 echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
 echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
-echo "HOOKS=(base udev encrypt autodetect modconf block btrfs filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
-arch-chroot /mnt mkinitcpio -P
+echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
+arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /usr/lib/modules).img -k $(ls /usr/lib/modules)
 
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
