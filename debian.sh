@@ -21,7 +21,7 @@
 BOOTTYPE=$1
 time=$2
 host=$3
-rpass=$4
+pass=$4
 user=$5
 DISKNAME=$6
 ROOTNAME=$7
@@ -80,7 +80,8 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 
 #Create encryption key
 arch-chroot /mnt mkdir -m 0700 /etc/keys
-arch-chroot /mnt ( umask 0077 && dd if=/dev/urandom bs=1 count=64 of=/etc/keys/root.key conv=excl,fsync )
+#arch-chroot /mnt ( umask 0077 && dd if=/dev/urandom bs=1 count=64 of=/etc/keys/root.key conv=excl,fsync )
+arch-chroot /mnt dd if=/dev/urandom bs=1 count=64 of=/etc/keys/root.key conv=excl,fsync
 arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/root.key
 echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/root.key luks,discard,key-slot=1" > /mnt/etc/crypttab
 echo "KEYFILE_PATTERN=\"/etc/keys/*.key\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook
