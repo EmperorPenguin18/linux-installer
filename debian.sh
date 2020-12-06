@@ -22,10 +22,9 @@ BOOTTYPE=$1
 time=$2
 host=$3
 rpass=$4
-upass=$5
-user=$6
-DISKNAME=$7
-UUID=$8
+user=$5
+DISKNAME=$6
+ROOTNAME=$7
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
@@ -54,7 +53,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list
 echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add -
 arch-chroot /mnt apt update
-arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git
+arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $grub btrfs-progs dosfstools $(echo $cpu)-microcode network-manager git cryptsetup
 
 #Clean up install
 arch-chroot /mnt apt purge -y nano vim-common
@@ -73,11 +72,11 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 
 #Create bootloader
 if [[ $BOOTTYPE = "efi" ]]; then
@@ -88,7 +87,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Debian" > /mnt/boot/loader/entries/debian.conf
    echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/debian.conf
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf
-   echo "options  root=UUID=\"$UUID\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
+   echo "options  root=UUID=\"$(blkid -s UUID -o value /dev/$ROOTNAME)\" rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
    arch-chroot /mnt grub-mkconfig -o /boot/grub2/grub.cfg
