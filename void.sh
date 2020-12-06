@@ -90,7 +90,7 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
 
 #Create encryption key
-xbps-remove -y dracut && xbps-install -y mkinitcpio mkinitcpio-encrypt
+arch-chroot /mnt xbps-remove -y dracut && arch-chroot /mnt xbps-install -y mkinitcpio mkinitcpio-encrypt
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
 arch-chroot /mnt chmod 600 /boot/initramfs-linux*
