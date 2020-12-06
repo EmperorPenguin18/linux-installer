@@ -93,7 +93,7 @@ arch-chroot /mnt dd bs=1 count=64 if=/dev/urandom of=/boot/volume.key
 echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /boot/volume.key
 arch-chroot /mnt chmod 000 /boot/volume.key
 arch-chroot /mnt chmod -R g-rwx,o-rwx /boot
-echo "cryptroot /dev/$ROOTNAME /boot/volume.key luks" /mnt/etc/crypttab
+echo "cryptroot /dev/$ROOTNAME /boot/volume.key luks" >> /mnt/etc/crypttab
 echo "install_items+=\" /boot/volume.key /etc/crypttab \"" > /mnt/etc/dracut.conf.d/10-crypt.conf
 
 #Create bootloader
