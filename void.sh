@@ -91,6 +91,7 @@ printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 arch-chroot /mnt useradd -m -s /bin/bash $user
 printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
 echo "permit persist $user" > /mnt/etc/doas.conf
+mkdir /home/$user/.snapshots
 
 #Create encryption key
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
