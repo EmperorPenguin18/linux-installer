@@ -60,7 +60,7 @@ arch-chroot /mnt dhcpcd
 arch-chroot /mnt xbps-install -Suy xbps
 arch-chroot /mnt xbps-install -uy
 arch-chroot /mnt xbps-install -y base-system
-arch-chroot /mnt xbps-remove -y base-voidstrap
+arch-chroot /mnt xbps-remove -y base-voidstrap sudo
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
@@ -95,14 +95,18 @@ arch-chroot /mnt chmod 000 /boot/volume.key
 arch-chroot /mnt chmod -R g-rwx,o-rwx /boot
 echo "cryptroot /dev/$ROOTNAME /boot/volume.key luks" /mnt/etc/crypttab
 echo "install_items+=\" /boot/volume.key /etc/crypttab \"" > /mnt/etc/dracut.conf.d/10-crypt.conf
-arch-chroot /mnt xbps-reconfigure -fa
 
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
-echo "GRUB_CMDLINE_LINUX=\"rd.luks.uuid=$(blkid -s UUID -o value /dev/$ROOTNAME)\"" >> /mnt/etc/default/grub
+echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):$(ls /dev/mapper | grep luks) root=/dev/mapper/$(ls /dev/mapper | grep luks)\"" >> /mnt/etc/default/grub
+
 if [[ $BOOTTYPE = "efi" ]]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+#Regenerate initramfs
+echo hostonly=yes >> /etc/dracut.conf
+arch-chroot /mnt xbps-reconfigure -fa
