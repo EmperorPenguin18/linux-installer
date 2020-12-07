@@ -17,7 +17,10 @@ Features:
 
 How to use:
 1. Must be run from an Arch environment. Latest live iso recommended.
-3. Make script executable (chmod +x) and run it with root privileges. (./install.sh)
+3. One command that downloads script, makes it executable and runs it. Make sure to run this with root privileges!
+```
+wget https://raw.githubusercontent.com/EmperorPenguin18/linux-installer/main/install.sh && chmod +x install.sh && ./install.sh
+```
 4. Answer prompts. Just covers the basics.
 5. Wait for installation to complete.
 6. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
