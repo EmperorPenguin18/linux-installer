@@ -21,12 +21,11 @@
 BOOTTYPE=$1
 time=$2
 host=$3
-rpass=$4
-upass=$5
-user=$6
-DISKNAME=$7
-virtual=$8
-UUID=$9
+pass=$4
+user=$5
+DISKNAME=$6
+virtual=$(dmidecode -s system-product-name)
+ROOTNAME=$7
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then cpu="iucode-tool"; fi
@@ -61,7 +60,7 @@ arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
 rm -r /media/loop
 
 #Install packages
-arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual
+arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $grub passwd linux-firmware btrfs-progs dosfstools $cpu git $virtual cryptsetup-luks
 
 #Set time
 ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
@@ -75,11 +74,17 @@ echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create root password
-printf "$rpass\n$rpass\n" | arch-chroot /mnt passwd
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$upass\n$upass\n" | arch-chroot /mnt passwd $user
+printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
+
+#Create encryption key
+arch-chroot /mnt dd if=/dev/urandom of=/keyfile bs=32 count=1
+arch-chroot /mnt chmod 600 /keyfile
+echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /keyfile
+echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) none" > /mnt/etc/crypttab
 
 #Create bootloader
 if [[ $BOOTTYPE = "efi" ]]; then
@@ -96,7 +101,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
    echo "linux /linux" >> /mnt/boot/loader/entries/fedora.conf
    echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
-   echo "options  root=UUID=$UUID rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
+   echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
