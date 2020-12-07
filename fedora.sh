@@ -100,7 +100,7 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
    echo "linux /linux" >> /mnt/boot/loader/entries/fedora.conf
    echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
-   echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
+   echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=/dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
