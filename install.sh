@@ -1,5 +1,6 @@
 #!/bin/bash
 
+timedatectl set-ntp true
 clear
 
 #Checks before starting
@@ -25,8 +26,7 @@ echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
 pacman -Q | awk '{print $1}' > pre.txt
-pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget --noconfirm --needed &>/dev/null
-timedatectl set-ntp true
+pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget cryptsetup --noconfirm --needed &>/dev/null
 DISKNAME=$(lsblk | grep disk | awk '{print $1 " " $4;}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
 clear
 read -p "Do you want hibernation enabled (Swap partition) [Y/n] " swap
