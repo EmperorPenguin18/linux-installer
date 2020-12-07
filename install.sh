@@ -166,7 +166,7 @@ reflector --country Canada --protocol https --sort rate --save /etc/pacman.d/mir
 pacman -Sy
 
 #Install distro
-chmod +x *.sh
+wget https://raw.githubusercontent.com/EmperorPenguin18/linux-installer/main/$(echo $distro).sh && chmod +x $(echo $distro).sh
 if [[ $distro = "debian" ]]; then
    ./debian.sh $BOOTTYPE $time $host $pass $user $DISKNAME $ROOTNAME
 elif [[ $distro = "fedora" ]]; then
@@ -193,6 +193,7 @@ fi
 umount -A /dev/$ENCRYPTNAME
 rm /etc/pacman.d/mirrorlist
 mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
+rm $(echo $distro).sh
 
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
