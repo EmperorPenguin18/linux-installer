@@ -2,6 +2,7 @@
 
 LGREEN='\033[1;32m'
 DGRAY='\033[1;30m'
+NC='\033[0m'
 printf "${LGREEN}                __.;=====;.__\n"
 printf "${LGREEN}            _.=+==++=++=+=+===;.\n"
 printf "${LGREEN}             -=+++=+===+=+=+++++=_\n"
@@ -19,7 +20,7 @@ printf "${LGREEN}       +vnvnvns.           .      :=-\n"
 printf "${LGREEN}        -Invnvvnsi..___..=sv=.     \`\n"
 printf "${LGREEN}          +Invnvnvnnnnnnnnvvnn;.\n"
 printf "${LGREEN}            ~|Invnvnvvnvvvnnv}+\`\n"
-printf "${LGREEN}               -~|{*l}*|~\n"
+printf "${LGREEN}               -~|{*l}*|~\n${NC}"
 
 BOOTTYPE=$1
 PASS=$2
