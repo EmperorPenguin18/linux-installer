@@ -217,13 +217,12 @@ clean_up ()
    mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
 }
 
+pre_checks
 echo "-------------------------------------------------"
 echo "           Welcome to linux-installer!           "
 echo "-------------------------------------------------"
 echo "Please answer the following questions to begin:"
 echo
-
-pre_checks
 prepare_installation
 setup_partitions
 partition_drive
@@ -237,7 +236,6 @@ set_time
 set_hostname
 set_password
 clean_up
-
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
