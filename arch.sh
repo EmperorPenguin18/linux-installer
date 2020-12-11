@@ -1,6 +1,7 @@
 #!/bin/bash
 
 LCYAN='\033[1;36m'
+NC='\033[0m'
 printf "${LCYAN}                   -\`\n"
 printf "${LCYAN}                  .o+\`\n"
 printf "${LCYAN}                 \`ooo/\n"
@@ -19,7 +20,7 @@ printf "${LCYAN}     /ossssssss/        +ssssooo/-\n"
 printf "${LCYAN}   \`/ossssso+/:-        -:/+osssso+-\n"
 printf "${LCYAN}  \`+sso+:-\`                 \`.-/+oso:\n"
 printf "${LCYAN} \`++:.                           \`-/+/\n"
-printf "${LCYAN} .\`                                 \`/\n"
+printf "${LCYAN} .\`                                 \`/\n${NC}"
 
 BOOTTYPE=$1
 PASS=$2
