@@ -33,9 +33,9 @@ else
    CPU="amd64"
 fi
 if [[ $BOOTTYPE = "efi" ]]; then
-   CPU=""
+   GRUB=""
 else
-   CPU="grub2"
+   GRUB="grub2"
 fi
 
 #Install base system to mounted disk
