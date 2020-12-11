@@ -2,6 +2,7 @@
 
 PURPLE='\033[1;34m'
 WHITE='\033[1;37m'
+NC='\033[0m'
 printf "          ${PURPLE}/:-------------:\\n"
 printf "       ${PURPLE}:-------------------::\n"
 printf "     ${PURPLE}:-----------${WHITE}/shhOHbmp${PURPLE}---:\\n"
@@ -18,7 +19,7 @@ printf "${PURPLE}:-    ------${WHITE}/hMMMy${PURPLE}------------:\n"
 printf "${PURPLE}:-- ${WHITE}:dMNdhhdNMMNo${PURPLE}------------;\n"
 printf "${PURPLE}:---${WHITE}:sdNMMMMNds:${PURPLE}------------:\n"
 printf "${PURPLE}:------${WHITE}:://:${PURPLE}-------------::\n"
-printf "${PURPLE}:---------------------://\n"
+printf "${PURPLE}:---------------------://\n${NC}"
 
 BOOTTYPE=$1
 PASS=$2
