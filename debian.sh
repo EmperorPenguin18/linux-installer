@@ -1,6 +1,7 @@
 #!/bin/bash
 
 RED='\033[1;31m'
+NC='\033[0m'
 printf "${RED}       _,met\$\$\$\$\$gg.\n"
 printf "${RED}    ,g\$\$\$\$\$\$\$\$\$\$\$\$\$\$\$P.\n"
 printf "${RED}  ,g\$\$P\"     \"\"\"Y\$\$.\".\n"
@@ -17,7 +18,7 @@ printf "${RED}   \`Y\$\$.\n"
 printf "${RED}     \`\$\$b.\n"
 printf "${RED}       \`Y\$\$b.\n"
 printf "${RED}          \`\"Y\$b._\n"
-printf "${RED}              \`\"\"\"\n"
+printf "${RED}              \`\"\"\"\n${NC}"
 
 BOOTTYPE=$1
 PASS=$2
