@@ -1,50 +1,50 @@
 #!/bin/bash
 
-#                __.;=====;.__
-#            _.=+==++=++=+=+===;.
-#             -=+++=+===+=+=+++++=_
-#        .     -=:``     `--==+=++==.
-#       _vi,    `            --+=++++:
-#      .uvnvi.       _._       -==+==+.
-#     .vvnvnI`    .;==|==;.     :|=||=|.
-#+QmQQmpvvnv; _yYsyQQWUUQQQm #QmQ#:QQQWUV$QQm.
-# -QQWQWpvvowZ?.wQQQE==<QWWQ/QWQW.QQWW(: jQWQE
-#  -$QQQQmmU'  jQQQ@+=<QWQQ)mQQQ.mQQQC+;jWQQ@'
-#   -$WQ8YnI:   QWQQwgQQWV`mWQQ.jQWQQgyyWW@!
-#     -1vvnvv.     `~+++`        ++|+++
-#      +vnvnnv,                 `-|===
-#       +vnvnvns.           .      :=-
-#        -Invnvvnsi..___..=sv=.     `
-#          +Invnvnvnnnnnnnnvvnn;.
-#            ~|Invnvnvvnvvvnnv}+`
-#               -~|{*l}*|~
+LGREEN='\033[1;32m'
+DGRAY='\033[1;30m'
+printf "${LGREEN}                __.;=====;.__\n"
+printf "${LGREEN}            _.=+==++=++=+=+===;.\n"
+printf "${LGREEN}             -=+++=+===+=+=+++++=_\n"
+printf "${LGREEN}        .     -=:``     `--==+=++==.\n"
+printf "${LGREEN}       _vi,    `            --+=++++:\n"
+printf "${LGREEN}      .uvnvi.       _._       -==+==+.\n"
+printf "${LGREEN}     .vvnvnI`    .;==|==;.     :|=||=|.\n"
+printf "${DGRAY}+QmQQm${LGREEN}pvvnv; ${DGRAY}_yYsyQQWUUQQQm #QmQ#${LGREEN}:${DGRAY}QQQWUV\$QQm.\n"
+printf "${DGRAY} -QQWQW${LGREEN}pvvo${DGRAY}wZ?.wQQQE${LGREEN}==<${DGRAY}QWWQ/QWQW.QQWW${LGREEN}(: ${DGRAY}jQWQE\n"
+printf "${DGRAY}  -\$QQQQmmU'  jQQQ@${LGREEN}+=<${DGRAY}QWQQ)mQQQ.mQQQC${LGREEN}+;${DGRAY}jWQQ@'\n"
+printf "${DGRAY}   -\$WQ8Y${LGREEN}nI:   ${DGRAY}QWQQwgQQWV${LGREEN}`${DGRAY}mWQQ.jQWQQgyyWW@!\n"
+printf "${LGREEN}     -1vvnvv.     `~+++`        ++|+++\n"
+printf "${LGREEN}      +vnvnnv,                 `-|===\n"
+printf "${LGREEN}       +vnvnvns.           .      :=-\n"
+printf "${LGREEN}        -Invnvvnsi..___..=sv=.     `\n"
+printf "${LGREEN}          +Invnvnvnnnnnnnnvvnn;.\n"
+printf "${LGREEN}            ~|Invnvnvvnvvvnnv}+`\n"
+printf "${LGREEN}               -~|{*l}*|~\n"
 
 BOOTTYPE=$1
-time=$2
-host=$3
-pass=$4
-user=$5
-DISKNAME=$6
-virtual=$(dmidecode -s system-product-name)
-ROOTNAME=$7
+PASS=$2
+USER=$3
+DISKNAME=$4
+VIRTUAL=$(dmidecode -s system-product-name)
+ROOTNAME=$5
 
 #Set variables
 if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
-   cpu="iucode-tool intel-ucode"
+   CPU="iucode-tool intel-ucode"
 else
-   cpu="linux-firmware-amd"
+   CPU="linux-firmware-amd"
 fi
-if [[ $virtual = "VirtualBox" ]]; then
-   virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"
-elif [[ $virtual = "KVM" ]]; then
-   virtual="qemu-ga"
+if [[ $VIRTUAL = "VirtualBox" ]]; then
+   VIRTUAL="virtualbox-ose-guest virtualbox-ose-guest-dkms"
+elif [[ $VIRTUAL = "KVM" ]]; then
+   VIRTUAL="qemu-ga"
 else
-   virtual=""
+   VIRTUAL=""
 fi
 if [[ $BOOTTYPE = "efi" ]]; then
-   grub="grub-x86_64-efi"
+   GRUB="grub-x86_64-efi"
 else
-   grub="grub"
+   GRUB="grub"
 fi
 
 #Install the base system
@@ -67,37 +67,32 @@ arch-chroot /mnt xbps-remove -y base-voidstrap sudo
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
+arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup
 arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
-ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
-arch-chroot /mnt hwclock --systohc
 echo "en_US.UTF-8 UTF-8" > /mnt/etc/default/libc-locales
 arch-chroot /mnt xbps-reconfigure -f glibc-locales
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
-echo $host > /mnt/etc/hostname
-echo "127.0.0.1   localhost" > /mnt/etc/hosts
-echo "::1   localhost" >> /mnt/etc/hosts
-echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
 arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
 
-#Create root password
-printf "$pass\n$pass\n" | arch-chroot /mnt passwd
-
 #Create user
-arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
-echo "permit persist $user" > /mnt/etc/doas.conf
-mkdir /home/$user/.snapshots
+arch-chroot /mnt useradd -m -s /bin/bash $USER
+mkdir /home/$USER/.snapshots
+
+#Configure doas
+echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
+echo "permit persist $USER" >> /mnt/etc/doas.conf
+arch-chroot /mnt ln -sf /usr/bin/doas /usr/bin/sudo
+arch-chroot /mnt ln -s /etc/doas.conf /etc/sudoers
 
 #Create encryption key
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/initramfs*
-echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+arch-chroot /mnt chmod 600 /boot/$(ls /mnt/boot | grep initramfs)
+echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
@@ -110,7 +105,7 @@ arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
 echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"" >> /mnt/etc/default/grub
 if [[ $BOOTTYPE = "efi" ]]; then
-   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
 fi
