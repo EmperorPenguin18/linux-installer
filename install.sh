@@ -74,7 +74,7 @@ partition_drive ()
    if [[ $SWAP = "n" ]] && [[ $BOOTTYPE = "efi" ]]; then
       parted --script /dev/$DISKNAME \
          mklabel gpt \
-         mkpart esp fat32 1MB 261MB \
+         mkpart boot fat32 1MB 261MB \
          set 1 esp on \
          mkpart root btrfs 261MB $(echo $DISKSIZE)MB
    elif [[ $SWAP = "n" ]]; then
@@ -86,7 +86,7 @@ partition_drive ()
    elif [[ $BOOTTYPE = "efi" ]]; then
       parted --script /dev/$DISKNAME \
          mklabel gpt \
-         mkpart esp fat32 1MB 261MB \
+         mkpart boot fat32 1MB 261MB \
          set 1 esp on \
          mkpart root btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)MB \
          mkpart swap linux-swap $(expr $DISKSIZE - $MEMSIZE)MB $(echo $DISKSIZE)MB
