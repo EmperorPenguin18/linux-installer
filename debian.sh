@@ -64,8 +64,9 @@ arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create user
+addgroup wheel
 arch-chroot /mnt useradd -m -s /bin/bash -G wheel $USER
-echo "root ALL(ALL) ALL" > /mnt/etc/sudoers
+echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 #Create encryption key
@@ -88,6 +89,8 @@ if [[ $BOOTTYPE = "efi" ]]; then
    echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf
    echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf
 else
+   echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
+   sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"/g" /mnt/etc/default/grub
    arch-chroot /mnt grub-install /dev/$DISKNAME
-   arch-chroot /mnt grub-mkconfig -o /boot/grub2/grub.cfg
+   arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 fi
