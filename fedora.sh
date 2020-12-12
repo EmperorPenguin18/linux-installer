@@ -60,7 +60,7 @@ arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --seto
 arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
 
 #Install packages
-arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $GRUB passwd linux-firmware btrfs-progs dosfstools $CPU git $VIRTUAL cryptsetup-luks sudo
+arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $GRUB passwd linux-firmware btrfs-progs dosfstools $CPU microcode_ctl git $VIRTUAL cryptsetup-luks sudo
 
 #Network stuff
 arch-chroot /mnt systemctl enable NetworkManager
