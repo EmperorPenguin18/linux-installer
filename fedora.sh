@@ -67,7 +67,7 @@ arch-chroot /mnt systemctl enable NetworkManager
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/bash -G wheel $USER
-echo "root ALL(ALL) ALL" > /mnt/etc/sudoers
+echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 #Create encryption key
