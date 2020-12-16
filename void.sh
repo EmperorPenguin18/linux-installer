@@ -68,7 +68,7 @@ arch-chroot /mnt xbps-remove -y base-voidstrap sudo
 rm void-x86_64-ROOTFS-*.tar.xz
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup
+arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup fish-shell
 arch-chroot /mnt xbps-reconfigure -fa
 
 #Set localization stuff
@@ -80,7 +80,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
 
 #Create user
-arch-chroot /mnt useradd -m -s /bin/bash $USER
+arch-chroot /mnt useradd -m -s /bin/fish $USER
 mkdir /home/$USER/.snapshots
 
 #Configure doas
