@@ -14,6 +14,7 @@ Support for Arch, Debian buster, Fedora 33, and Void included. These distros are
 - SSDs and HDDs
 - Encrypted root partition
 - Performance kernels when available
+- Fish shell
 
 ### How to use:
 1. Boot into an Arch environment. Latest live iso recommended (for HW detection).
