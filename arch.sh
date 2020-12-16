@@ -44,7 +44,7 @@ else
 fi
 
 #Install base system + packages
-pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $CPU)-ucode opendoas networkmanager git $VIRTUAL
+pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $CPU)-ucode opendoas networkmanager git $VIRTUAL fish
 
 #Set localization stuff
 echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
@@ -68,7 +68,7 @@ arch-chroot /mnt mkinitcpio -P
 arch-chroot /mnt systemctl enable NetworkManager
 
 #Create user
-arch-chroot /mnt useradd -m -s /bin/bash $USER
+arch-chroot /mnt useradd -m -s /bin/fish $USER
 
 #Configure doas
 echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
