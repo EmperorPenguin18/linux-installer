@@ -44,7 +44,7 @@ else
 fi
 
 #Install base system + packages
-pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $CPU)-ucode opendoas networkmanager git $VIRTUAL fish
+pacstrap /mnt base linux-zen linux-zen-headers linux-firmware grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $(echo $CPU)-ucode opendoas networkmanager git $VIRTUAL fish fakeroot
 
 #Set localization stuff
 echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen
@@ -54,7 +54,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 #Create encryption key
 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/$(ls /mnt/boot | grep initramfs-linux)
+arch-chroot /mnt chmod 600 /boot/$(arch-chroot /mnt ls /boot | grep initramfs-linux)
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
@@ -73,12 +73,14 @@ arch-chroot /mnt useradd -m -s /bin/fish $USER
 #Configure doas
 echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
 echo "permit persist $USER" >> /mnt/etc/doas.conf
-arch-chroot /mnt su sebastien -c "git clone https://aur.archlinux.org/opendoas-sudo.git"
-mv /mnt/opendoas-sudo/* /mnt
-arch-chroot /mnt su sebastien -c "makepkg --noconfirm"
-arch-chroot /mnt pacman -U opendoas*
-rm -r /mnt/PKGBUILD /mnt/pkg /mnt/src /mnt/opendoas*
-arch-chroot /mnt ln -s /etc/doas.conf /etc/sudoers
+arch-chroot /mnt su $USER -c "git clone https://aur.archlinux.org/opendoas-sudo.git /home/$USER/opendoas-sudo"
+mv /mnt/home/$USER/opendoas-sudo/* /mnt
+chmod 777 /mnt
+arch-chroot /mnt su $USER -c "makepkg --noconfirm"
+arch-chroot /mnt pacman -U $(ls /mnt | grep opendoas) --noconfirm
+chmod 755 /mnt
+rm -r /mnt/PKGBUILD /mnt/pkg /mnt/src /mnt/opendoas* /mnt/home/$USER/opendoas-sudo
+ln -sf /mnt/etc/doas.conf /mnt/etc/sudoers
 
 #Create bootloader
 sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /mnt/etc/default/grub
