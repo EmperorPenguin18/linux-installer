@@ -59,8 +59,8 @@ echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/e
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
-arch-chroot /mnt ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
-arch-chroot /mnt dhcpcd
+ln -s /mnt/etc/sv/dhcpcd /mnt/etc/runit/runsvdir/default/
+#arch-chroot /mnt dhcpcd
 arch-chroot /mnt xbps-install -Suy xbps
 arch-chroot /mnt xbps-install -uy
 arch-chroot /mnt xbps-install -y base-system
@@ -77,7 +77,7 @@ arch-chroot /mnt xbps-reconfigure -f glibc-locales
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
-arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
+ln -s /mnt/etc/sv/NetworkManager /mnt/var/service/
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/fish $USER
@@ -86,13 +86,13 @@ mkdir /home/$USER/.snapshots
 #Configure doas
 echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
 echo "permit persist $USER" >> /mnt/etc/doas.conf
-arch-chroot /mnt ln -sf /usr/bin/doas /usr/bin/sudo
-arch-chroot /mnt ln -s /etc/doas.conf /etc/sudoers
+ln -sf /mnt/usr/bin/doas /mnt/usr/bin/sudo
+ln -s /mnt/etc/doas.conf /mnt/etc/sudoers
 
 #Create encryption key
-arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/$(ls /mnt/boot | grep initramfs)
+dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
+chmod 600 /mnt/crypto_keyfile.bin
+chmod 600 /mnt/boot/initramfs*
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
