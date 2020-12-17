@@ -71,8 +71,8 @@ echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 #Create encryption key
-arch-chroot /mnt dd if=/dev/urandom of=/keyfile bs=32 count=1
-arch-chroot /mnt chmod 600 /keyfile
+dd if=/dev/urandom of=/mnt/keyfile bs=32 count=1
+chmod 600 /mnt/keyfile
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /keyfile
 echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) none" > /mnt/etc/crypttab
 
