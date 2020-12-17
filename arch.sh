@@ -52,9 +52,9 @@ arch-chroot /mnt locale-gen
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Create encryption key
-arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/$(arch-chroot /mnt ls /boot | grep initramfs-linux)
+dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
+chmod 600 /mnt/crypto_keyfile.bin
+chmod 600 /mnt/boot/initramfs-linux*
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
 
 #Setup initramfs HOOKS
