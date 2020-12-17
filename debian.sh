@@ -70,8 +70,8 @@ echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
 #Create encryption key
-arch-chroot /mnt mkdir -m 0700 /etc/keys
-arch-chroot /mnt dd if=/dev/urandom bs=1 count=64 of=/etc/keys/root.key conv=excl,fsync
+mkdir -m 0700 /mnt/etc/keys
+dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/root.key conv=excl,fsync
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/root.key
 echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/root.key luks,discard,key-slot=1" > /mnt/etc/crypttab
 echo "KEYFILE_PATTERN=\"/etc/keys/*.key\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook
