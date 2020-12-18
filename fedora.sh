@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 PURPLE='\033[1;34m'
 WHITE='\033[1;37m'
@@ -29,20 +29,20 @@ VIRTUAL=$(dmidecode -s system-product-name)
 ROOTNAME=$5
 
 #Set variables
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then CPU="iucode-tool"; fi
-if [[ $VIRTUAL = "KVM" ]]; then
+if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then CPU="iucode-tool"; fi
+if [ "${VIRTUAL}" = "KVM" ]; then
    VIRTUAL="qemu-guest-agent"
 else
    VIRTUAL=""
 fi
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    GRUB=""
 else
    GRUB="grub2-pc"
 fi
 
 #Get DNF
-if [[ $(df | grep /run/archiso/cowspace | wc -l) -gt 0 ]]; then mount -o remount,size=2G /run/archiso/cowspace; fi
+if [ "$(df | grep /run/archiso/cowspace | wc -l)" -gt 0 ]; then mount -o remount,size=2G /run/archiso/cowspace; fi
 wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
 DEVICE=$(losetup --show -fP fedora.img)
 mkdir -p /loop
@@ -77,7 +77,7 @@ echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /keyfile
 echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) none" > /mnt/etc/crypttab
 
 #Create bootloader
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    arch-chroot /mnt bootctl install
    echo "default  fedora.conf" > /mnt/boot/loader/loader.conf
    echo "timeout  4" >> /mnt/boot/loader/loader.conf
