@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 LGREEN='\033[1;32m'
 DGRAY='\033[1;30m'
@@ -30,19 +30,19 @@ VIRTUAL=$(dmidecode -s system-product-name)
 ROOTNAME=$5
 
 #Set variables
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
+if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
    CPU="iucode-tool intel-ucode"
 else
    CPU="linux-firmware-amd"
 fi
-if [[ $VIRTUAL = "VirtualBox" ]]; then
+if [ "${VIRTUAL}" = "VirtualBox" ]; then
    VIRTUAL="virtualbox-ose-guest virtualbox-ose-guest-dkms"
-elif [[ $VIRTUAL = "KVM" ]]; then
+elif [ "${VIRTUAL}" = "KVM" ]; then
    VIRTUAL="qemu-ga"
 else
    VIRTUAL=""
 fi
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    GRUB="grub-x86_64-efi"
 else
    GRUB="grub"
@@ -105,7 +105,7 @@ arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
 echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"" >> /mnt/etc/default/grub
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
