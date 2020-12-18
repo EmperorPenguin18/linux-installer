@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 LCYAN='\033[1;36m'
 NC='\033[0m'
@@ -30,14 +30,14 @@ VIRTUAL=$(dmidecode -s system-product-name)
 ROOTNAME=$5
 
 #Set variables
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
+if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
   CPU="iucode-tool intel"
 else
   CPU="amd"
 fi
-if [[ $VIRTUAL = "VirtualBox" ]]; then
+if [ "${VIRTUAL}" = "VirtualBox" ]; then
   VIRTUAL="virtualbox-guest-utils virtualbox-guest-dkms"
-elif [[ $VIRTUAL = "KVM" ]]; then
+elif [ "${VIRTUAL}" = "KVM" ]; then
   VIRTUAL="qemu-guest-agent"
 else
   VIRTUAL=""
@@ -85,7 +85,7 @@ ln -sf /mnt/etc/doas.conf /mnt/etc/sudoers
 #Create bootloader
 sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /mnt/etc/default/grub
 sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"/g" /mnt/etc/default/grub
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
