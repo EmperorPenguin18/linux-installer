@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 RED='\033[1;31m'
 NC='\033[0m'
@@ -27,12 +27,12 @@ DISKNAME=$4
 ROOTNAME=$5
 
 #Set variables
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
+if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
    CPU="iucode-tool intel"
 else
    CPU="amd64"
 fi
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    GRUB=""
 else
    GRUB="grub2"
@@ -79,7 +79,7 @@ echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf
 arch-chroot /mnt update-initramfs -u
 
 #Create bootloader
-if [[ $BOOTTYPE = "efi" ]]; then
+if [ "${BOOTTYPE}" = "efi" ]; then
    arch-chroot /mnt bootctl install
    echo "default  debian.conf" > /mnt/boot/loader/loader.conf
    echo "timeout  4" >> /mnt/boot/loader/loader.conf
