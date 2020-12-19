@@ -19,7 +19,7 @@ pre_checks ()
       exit 1
    fi
    pacman -Q | awk '{print $1}' > pre.txt
-   pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
+   pacman -Sy dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
 }
 
 user_prompts ()
