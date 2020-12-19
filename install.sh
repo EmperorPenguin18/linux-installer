@@ -18,19 +18,23 @@ pre_checks ()
       echo "The network is down"
       exit 1
    fi
+   pacman -Q | awk '{print $1}' > pre.txt
+   pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
 }
 
-prepare_installation ()
+user_prompts ()
 {
-   pacman -Q | awk '{print $1}' > pre.txt
-   pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr fzf wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
-   DISKNAME=$(lsblk | awk '/disk/ {print $1 " " $4}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
-   clear
-   read -r -p "Do you want hibernation enabled (Swap partition) [Y/n] " SWAP
-   DISTRO=$(printf "Arch\nDebian\nFedora\nVoid\n" | fzf -i --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
-   clear
    mv /usr/share/zoneinfo/right /usr/share/right
    mv /usr/share/zoneinfo/posix /usr/share/posix
+   echo "-------------------------------------------------"
+   echo "           Welcome to linux-installer!           "
+   echo "-------------------------------------------------"
+   echo "Please answer the following questions to begin:"
+   echo
+   DISKNAME=$(lsblk | awk '/disk/ {print $1 " " $4}' | fzf -i --prompt "Choose disk to install to. >" --layout reverse | awk '{print $1;}')
+   clear
+   DISTRO=$(printf "Arch\nDebian\nFedora\nVoid\n" | fzf -i --prompt "What distro do you want to install? >" --layout reverse | awk '{print tolower($0)}')
+   clear
    TIME=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | fzf -i --prompt "Choose a timezone. >" --layout reverse)
    clear
    read -r -p "What will the hostname of this computer be? >" HOST
@@ -40,6 +44,7 @@ prepare_installation ()
    read -r -s -p "Confirm password. >" PASSCHECK
    echo
    if [ "${PASS}" != "${PASSCHECK}" ]; then echo "Passwords do not match"; exit 1; fi
+   read -r -p "Do you want hibernation enabled (Swap partition) [Y/n] " SWAP
    read -r -p "This will delete all data on selected storage device. Are you sure you want to continue? [y/N] " SURE
    if [ "${SURE}" != "y" ]; then exit 1; fi
    clear
@@ -171,23 +176,14 @@ configure_mirrors ()
 
 install_distro ()
 {
-   wget https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh && chmod +x $(echo $DISTRO).sh
-   if [ "${DISTRO}" = "debian" ]; then
-      ./debian.sh $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
-   elif [ "${DISTRO}" = "fedora" ]; then
-      ./fedora.sh $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
-   elif [ "${DISTRO}" = "void" ]; then
-      ./void.sh $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
-   else
-      ./arch.sh $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
-   fi
+   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
+   echo "-------------------------------------------------"
+   echo "                  Finishing up                   "
+   echo "-------------------------------------------------"
 }
 
 set_time ()
 {
-   echo "-------------------------------------------------"
-   echo "                  Finishing up                   "
-   echo "-------------------------------------------------"
    ln -sf /mnt/usr/share/zoneinfo/$(echo $TIME) /mnt/etc/localtime
    arch-chroot /mnt hwclock --systohc
 }
@@ -217,15 +213,13 @@ clean_up ()
    umount -A /dev/mapper/cryptroot
    rm /etc/pacman.d/mirrorlist
    mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
+   echo "-------------------------------------------------"
+   echo "          All done! You can reboot now.          "
+   echo "-------------------------------------------------"
 }
 
 pre_checks
-echo "-------------------------------------------------"
-echo "           Welcome to linux-installer!           "
-echo "-------------------------------------------------"
-echo "Please answer the following questions to begin:"
-echo
-prepare_installation
+user_prompts
 setup_partitions
 partition_drive
 encrypt_partitions
@@ -238,6 +232,3 @@ set_time
 set_hostname
 set_password
 clean_up
-echo "-------------------------------------------------"
-echo "          All done! You can reboot now.          "
-echo "-------------------------------------------------"
