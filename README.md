@@ -18,12 +18,12 @@ Support for Arch, Debian buster, Fedora 33, and Void included. These distros are
 
 ### How to use:
 1. Boot into an Arch environment. Latest live iso recommended (for HW detection).
-2. Make sure your target drive is attached, internet is connected and wget is installed (`pacman -Sy wget`).
+2. Make sure your target drive is attached and internet is connected.
 3. Run this command with root privileges:
 ```
-wget https://raw.github.com/EmperorPenguin18/linux-installer/main/install.sh && chmod +x install.sh && ./install.sh
+curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/install.sh | sh
 ```
-4. Answer prompts. Just covers the basics.
+4. Answer prompts. Not designed to be user friendly.
 5. Wait for installation to complete.
 6. Boot away! Only the most basic packages are installed so the rest is up to you. But thats the fun part right? :)
 
