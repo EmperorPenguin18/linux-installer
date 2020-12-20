@@ -60,7 +60,7 @@ echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
 ln -s /mnt/etc/sv/dhcpcd /mnt/etc/runit/runsvdir/default/
-#arch-chroot /mnt dhcpcd
+arch-chroot /mnt dhcpcd
 arch-chroot /mnt xbps-install -Suy xbps
 arch-chroot /mnt xbps-install -uy
 arch-chroot /mnt xbps-install -y base-system
