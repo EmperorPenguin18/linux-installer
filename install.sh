@@ -88,72 +88,81 @@ partition_drive ()
          mklabel gpt \
          mkpart boot fat32 1MB 261MB \
          set 1 esp on \
-         mkpart root btrfs 261MB $(echo $DISKSIZE)MB
+         mkpart root btrfs 261MB $(echo $DISKSIZE)MB || \
+      return 1
    elif [ "${SWAP}" = "n" ]; then
       parted --script /dev/$DISKNAME \
          mklabel msdos \
          mkpart primary fat32 1MB 261MB \
          set 1 boot on \
-         mkpart primary btrfs 261MB $(echo $DISKSIZE)MB
+         mkpart primary btrfs 261MB $(echo $DISKSIZE)MB || \
+      return 1
    elif [ "${BOOTTYPE}" = "efi" ]; then
       parted --script /dev/$DISKNAME \
          mklabel gpt \
          mkpart boot fat32 1MB 261MB \
          set 1 esp on \
          mkpart root btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)MB \
-         mkpart swap linux-swap $(expr $DISKSIZE - $MEMSIZE)MB $(echo $DISKSIZE)MB
+         mkpart swap linux-swap $(expr $DISKSIZE - $MEMSIZE)MB $(echo $DISKSIZE)MB || \
+      return 1
    else
       parted --script /dev/$DISKNAME \
          mklabel msdos \
          mkpart primary fat32 1MB 261MB \
          set 1 boot on \
          mkpart primary btrfs 261MB $(expr $DISKSIZE - $MEMSIZE)MB \
-         mkpart primary linux-swap $(expr $DISKSIZE - $MEMSIZE)MB $(echo $DISKSIZE)MB
+         mkpart primary linux-swap $(expr $DISKSIZE - $MEMSIZE)MB $(echo $DISKSIZE)MB || \
+      return 1
    fi
 }
 
 encrypt_partitions ()
 {
-   echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$(echo $DISKNAME2)2
-   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)2 cryptroot
+   echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$(echo $DISKNAME2)2 && \
+   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)2 cryptroot || \
+   return 1
 }
 
 format_partitions ()
 {
-   mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
-   mkfs.btrfs /dev/mapper/cryptroot
+   mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1 && \
+   mkfs.btrfs /dev/mapper/cryptroot && \
+   mount /dev/mapper/cryptroot /mnt || \
+   return 1
    if [ "${SWAP}" != "n" ]; then
-      mkswap /dev/$(echo $DISKNAME2)3
-      swapon /dev/$(echo $DISKNAME2)3
+      mkswap /dev/$(echo $DISKNAME2)3 && \
+      swapon /dev/$(echo $DISKNAME2)3 || \
+      return 1
    fi
-   mount /dev/mapper/cryptroot /mnt
 }
 
 mount_subvolumes ()
 {
-   pth=$(pwd)
-   cd /mnt
-   btrfs subvolume create _active
-   btrfs subvolume create _active/rootvol
-   btrfs subvolume create _active/homevol
-   btrfs subvolume create _active/tmp
-   btrfs subvolume create _snapshots
-   cd $pth
-   umount /mnt
-   mount -o subvol=_active/rootvol /dev/mapper/cryptroot /mnt
-   mkdir /mnt/home
-   mkdir /mnt/tmp
-   mkdir /mnt/boot
-   mount -o subvol=_active/tmp /dev/mapper/cryptroot /mnt/tmp
-   mount /dev/$(echo $DISKNAME2)1 /mnt/boot
-   mount -o subvol=_active/homevol /dev/mapper/cryptroot /mnt/home
+   pth=$(pwd) && \
+   cd /mnt && \
+   btrfs subvolume create _active && \
+   btrfs subvolume create _active/rootvol && \
+   btrfs subvolume create _active/homevol && \
+   btrfs subvolume create _active/tmp && \
+   btrfs subvolume create _snapshots && \
+   cd $pth && \
+   umount /mnt && \
+   mount -o subvol=_active/rootvol /dev/mapper/cryptroot /mnt && \
+   mkdir /mnt/home && \
+   mkdir /mnt/tmp && \
+   mkdir /mnt/boot && \
+   mount -o subvol=_active/tmp /dev/mapper/cryptroot /mnt/tmp && \
+   mount /dev/$(echo $DISKNAME2)1 /mnt/boot && \
+   mount -o subvol=_active/homevol /dev/mapper/cryptroot /mnt/home || \
+   return 1
 }
 
 generate_fstab ()
 {
-   mkdir /mnt/etc
-   echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab
-   UUID2=$(blkid -s UUID -o value /dev/mapper/cryptroot)
+   mkdir /mnt/etc && \
+   echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab && \
+   UUID2=$(blkid -s UUID -o value /dev/mapper/cryptroot) || \
+   return 1
    if [ "${SWAP}" != "n" ]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
    if [ "$(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l)" -eq 1 ]; then
       echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
@@ -170,48 +179,62 @@ generate_fstab ()
 
 configure_mirrors ()
 {
-   cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-   reflector --country $(curl -sL https://raw.github.com/eggert/tz/master/zone1970.tab | grep $TIME | awk '{print $1}') --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-   pacman -Sy
+   cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak && \
+   reflector --country $(curl -sL https://raw.github.com/eggert/tz/master/zone1970.tab | grep $TIME | awk '{print $1}') --protocol https --sort rate --save /etc/pacman.d/mirrorlist && \
+   pacman -Sy || \
+   return 1
 }
 
 install_distro ()
 {
-   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
+   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2 || \
+   return 1
 }
 
 set_time ()
 {
-   ln -sf /mnt/usr/share/zoneinfo/$(echo $TIME) /mnt/etc/localtime
-   arch-chroot /mnt hwclock --systohc
+   ln -sf /mnt/usr/share/zoneinfo/$(echo $TIME) /mnt/etc/localtime && \
+   arch-chroot /mnt hwclock --systohc || \
+   return 1
 }
 
 set_hostname ()
 {
-   echo $HOST > /mnt/etc/hostname
-   echo "127.0.0.1   localhost" > /mnt/etc/hosts
-   echo "::1   localhost" >> /mnt/etc/hosts
-   echo "127.0.1.1   $(echo $HOST).localdomain  $HOST" >> /mnt/etc/hosts
+   echo $HOST > /mnt/etc/hostname && \
+   echo "127.0.0.1   localhost" > /mnt/etc/hosts && \
+   echo "::1   localhost" >> /mnt/etc/hosts && \
+   echo "127.0.1.1   $(echo $HOST).localdomain  $HOST" >> /mnt/etc/hosts || \
+   return 1
 }
 
 set_password ()
 {
-   printf "$PASS\n$PASS\n" | arch-chroot /mnt passwd
-   printf "$PASS\n$PASS\n" | arch-chroot /mnt passwd $USER
+   printf "$PASS\n$PASS\n" | arch-chroot /mnt passwd && \
+   printf "$PASS\n$PASS\n" | arch-chroot /mnt passwd $USER || \
+   return 1
 }
 
 clean_up ()
 {
-   pacman -Q | awk '{print $1}' > post.txt
-   pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1
-   rm pre.txt post.txt
-   mv /usr/share/right /usr/share/zoneinfo/right
-   mv /usr/share/posix /usr/share/zoneinfo/posix
-   umount /mnt/boot
-   umount -A /dev/mapper/cryptroot
-   cryptsetup close /dev/mapper/cryptroot
-   rm /etc/pacman.d/mirrorlist
-   mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
+   pacman -Q | awk '{print $1}' > post.txt && \
+   pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1 && \
+   rm pre.txt post.txt && \
+   mv /usr/share/right /usr/share/zoneinfo/right && \
+   mv /usr/share/posix /usr/share/zoneinfo/posix && \
+   umount /mnt/boot && \
+   umount -A /dev/mapper/cryptroot && \
+   cryptsetup close /dev/mapper/cryptroot && \
+   rm /etc/pacman.d/mirrorlist && \
+   mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist || \
+   return 1
+}
+
+check_error ()
+{
+   if [ $? -ne 0]; then
+      echo $1
+      exit -1
+   fi
 }
 
 pre_checks
@@ -221,25 +244,36 @@ echo "                Partitioning disk                "
 echo "-------------------------------------------------"
 setup_partitions
 partition_drive
+check_error "Partition drive failed"
 encrypt_partitions
+check_error "Encrypt partitions failed"
 echo "-------------------------------------------------"
 echo "              Formatting partitions              "
 echo "-------------------------------------------------"
 format_partitions
+check_error "Format partitions failed"
 mount_subvolumes
+check_error "Mount subvolumes failed"
 generate_fstab
+check_error "Generate fstab failed"
 echo "-------------------------------------------------"
 echo "                Installing distro                "
 echo "-------------------------------------------------"
 configure_mirrors
+check_error "Configure mirrors failed"
 install_distro
+check_error "Install distro failed"
 echo "-------------------------------------------------"
 echo "                  Finishing up                   "
 echo "-------------------------------------------------"
 set_time
+check_error "Set time failed"
 set_hostname
+check_error "Set hostname failed"
 set_password
+check_error "Set password failed"
 clean_up
+check_error "Clean up failed"
 echo "-------------------------------------------------"
 echo "          All done! You can reboot now.          "
 echo "-------------------------------------------------"
