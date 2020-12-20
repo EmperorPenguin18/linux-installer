@@ -231,7 +231,7 @@ clean_up ()
 
 check_error ()
 {
-   if [ $? -ne 0]; then
+   if [ $? -ne 0 ]; then
       echo $1
       exit -1
    fi
