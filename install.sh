@@ -18,8 +18,9 @@ pre_checks ()
       echo "The network is down"
       exit 1
    fi
+   pacman -Sy >/dev/null 2>&1
    pacman -Q | awk '{print $1}' > pre.txt
-   pacman -Sy dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
+   pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
 }
 
 user_prompts ()
@@ -39,7 +40,7 @@ user_prompts ()
       --and-widget --clear --passwordbox "Confirm password." 0 0 \
    )
    rm disks.txt zones.txt
-   if [ "$(awk '{print $6}')" != "$(awk '{print $7}')" ]; then echo "Passwords do not match"; exit 1; fi
+   if [ "$(echo $TEMP | awk '{print $6}')" != "$(echo $TEMP | awk '{print $7}')" ]; then echo "Passwords do not match"; exit 1; fi
    DISKNAME=$(echo $TEMP | awk '{print $1}')
    DISTRO=$(echo $TEMP | awk '{print $2}')
    TIME=$(echo $TEMP | awk '{print $3}')
@@ -61,9 +62,6 @@ user_prompts ()
 
 setup_partitions ()
 {
-   echo "-------------------------------------------------"
-   echo "                Partitioning disk                "
-   echo "-------------------------------------------------"
    echo "Wiping all data on disk..."
    dd if=/dev/zero of=/dev/$DISKNAME bs=4096 status=progress
    if [ "$(efibootmgr | wc -l)" -gt 0 ]; then
@@ -122,9 +120,6 @@ encrypt_partitions ()
 
 format_partitions ()
 {
-   echo "-------------------------------------------------"
-   echo "              Formatting partitions              "
-   echo "-------------------------------------------------"
    mkfs.fat -F 32 /dev/$(echo $DISKNAME2)1
    mkfs.btrfs /dev/mapper/cryptroot
    if [ "${SWAP}" != "n" ]; then
@@ -175,9 +170,6 @@ generate_fstab ()
 
 configure_mirrors ()
 {
-   echo "-------------------------------------------------"
-   echo "                Installing distro                "
-   echo "-------------------------------------------------"
    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
    reflector --country $(curl -sL https://raw.github.com/eggert/tz/master/zone1970.tab | grep $TIME | awk '{print $1}') --protocol https --sort rate --save /etc/pacman.d/mirrorlist
    pacman -Sy
@@ -186,9 +178,6 @@ configure_mirrors ()
 install_distro ()
 {
    curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2
-   echo "-------------------------------------------------"
-   echo "                  Finishing up                   "
-   echo "-------------------------------------------------"
 }
 
 set_time ()
@@ -220,24 +209,37 @@ clean_up ()
    mv /usr/share/posix /usr/share/zoneinfo/posix
    umount /mnt/boot
    umount -A /dev/mapper/cryptroot
+   cryptsetup close /dev/mapper/cryptroot
    rm /etc/pacman.d/mirrorlist
    mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist
-   echo "-------------------------------------------------"
-   echo "          All done! You can reboot now.          "
-   echo "-------------------------------------------------"
 }
 
 pre_checks
 user_prompts
+echo "-------------------------------------------------"
+echo "                Partitioning disk                "
+echo "-------------------------------------------------"
 setup_partitions
 partition_drive
 encrypt_partitions
+echo "-------------------------------------------------"
+echo "              Formatting partitions              "
+echo "-------------------------------------------------"
 format_partitions
 mount_subvolumes
 generate_fstab
+echo "-------------------------------------------------"
+echo "                Installing distro                "
+echo "-------------------------------------------------"
 configure_mirrors
 install_distro
+echo "-------------------------------------------------"
+echo "                  Finishing up                   "
+echo "-------------------------------------------------"
 set_time
 set_hostname
 set_password
 clean_up
+echo "-------------------------------------------------"
+echo "          All done! You can reboot now.          "
+echo "-------------------------------------------------"
