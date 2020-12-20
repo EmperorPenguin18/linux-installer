@@ -77,11 +77,11 @@ arch-chroot /mnt xbps-reconfigure -f glibc-locales
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 
 #Network stuff
-ln -s /mnt/etc/sv/NetworkManager /mnt/var/service/
+ln -s /mnt/etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
 
 #Create user
 arch-chroot /mnt useradd -m -s /bin/fish $USER
-mkdir /home/$USER/.snapshots
+mkdir /mnt/home/$USER/.snapshots
 
 #Configure doas
 echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
