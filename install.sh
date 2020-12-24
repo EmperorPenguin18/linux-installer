@@ -177,14 +177,6 @@ generate_fstab ()
    fi
 }
 
-configure_mirrors ()
-{
-   cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak && \
-   reflector --country $(curl -sL https://raw.github.com/eggert/tz/master/zone1970.tab | grep $TIME | awk '{print $1}') --protocol https --sort rate --save /etc/pacman.d/mirrorlist && \
-   pacman -Sy || \
-   return 1
-}
-
 install_distro ()
 {
    curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2 || \
@@ -223,9 +215,7 @@ clean_up ()
    mv /usr/share/posix /usr/share/zoneinfo/posix && \
    umount /mnt/boot && \
    umount -A /dev/mapper/cryptroot && \
-   cryptsetup close /dev/mapper/cryptroot && \
-   rm /etc/pacman.d/mirrorlist && \
-   mv /etc/pacman.d/mirrorlist.bak /etc/pacman.d/mirrorlist || \
+   cryptsetup close /dev/mapper/cryptroot || \
    return 1
 }
 
@@ -259,8 +249,6 @@ check_error "Generate fstab failed"
 echo "-------------------------------------------------"
 echo "                Installing distro                "
 echo "-------------------------------------------------"
-configure_mirrors
-check_error "Configure mirrors failed"
 install_distro
 check_error "Install distro failed"
 echo "-------------------------------------------------"
