@@ -31,6 +31,7 @@ curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/install.sh
 - Encrypt swap
 - Support ARM processors (single-board computers, new macbooks)
 - Add openSUSE, gentoo, bedrock, alpine, and exherbo
+- Remove bash (replace with dash for scripts and fish for users)
 
 ### Known issues:
 - Can't use NVMe drives with Legacy boot
