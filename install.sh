@@ -74,7 +74,7 @@ setup_partitions ()
    DISKSIZE=$(printf "$DISKSIZE / 1024 / 1024\n" | bc)
    MEMSIZE=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
    MEMSIZE=$(printf "$MEMSIZE * 1.5 / 1024\n" | bc)
-   if [ "$(echo $DISKNAME | head -c 2 )" = "sd" ]; then
+   if [ "$(expr length $DISKNAME)" -eq 3 ]; then
       DISKNAME2=$DISKNAME
    else
       DISKNAME2=$(echo $DISKNAME)p
