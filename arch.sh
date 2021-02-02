@@ -87,7 +87,7 @@ arch-chroot /mnt systemctl enable NetworkManager
 check_error
 
 #Create user
-arch-chroot /mnt useradd -m -s /bin/fish $USER
+arch-chroot /mnt useradd -m -s /bin/fish -G video $USER
 check_error
 
 #Configure doas
