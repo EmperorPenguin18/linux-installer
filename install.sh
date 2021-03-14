@@ -207,8 +207,8 @@ set_password ()
 
 clean_up ()
 {
-   pacman -Q | awk '{print $1}' > post.txt && \
-   pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1 && \
+   pacman -Q | awk '{print $1}' > post.txt
+   [ "$(diff pre.txt post.txt | wc -l)" -gt 0 ] && pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1
    rm pre.txt post.txt && \
    mv /usr/share/right /usr/share/zoneinfo/right && \
    mv /usr/share/posix /usr/share/zoneinfo/posix && \
