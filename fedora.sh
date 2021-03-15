@@ -103,7 +103,9 @@ chmod 600 /mnt/keyfile
 check_error
 echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /keyfile
 check_error
-echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) none" > /mnt/etc/crypttab
+echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /keyfile luks" > /mnt/etc/crypttab
+check_error
+echo 'install_items+=" /keyfile /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
 check_error
 
 #Create bootloader
