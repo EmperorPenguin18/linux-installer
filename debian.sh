@@ -87,7 +87,7 @@ arch-chroot /mnt systemctl enable NetworkManager
 check_error
 
 #Create user
-addgroup wheel
+arch-chroot /mnt addgroup wheel
 check_error
 arch-chroot /mnt useradd -m -s /bin/fish -G wheel $USER
 check_error
