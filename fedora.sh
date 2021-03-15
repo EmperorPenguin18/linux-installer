@@ -124,7 +124,7 @@ if [ "${BOOTTYPE}" = "efi" ]; then
    check_error
    find /mnt/boot -name "initrd" -exec mv -t /mnt/boot {} +
    check_error
-   find /mnt/boot -name "*x86_64" -exec rmdir -p {} + 2>/dev/null
+   find /mnt/boot -name "*x86_64" -exec rmdir -p {} +# 2>/dev/null
    check_error
    echo "title Fedora" > /mnt/boot/loader/entries/fedora.conf
    check_error
