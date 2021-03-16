@@ -108,7 +108,7 @@ chmod 755 /mnt
 check_error
 rm -r /mnt/PKGBUILD /mnt/pkg /mnt/src /mnt/opendoas* /mnt/home/$USER/opendoas-sudo
 check_error
-ln -sf /mnt/etc/doas.conf /mnt/etc/sudoers
+ln -sf /etc/doas.conf /mnt/etc/sudoers
 check_error
 
 #Create bootloader
