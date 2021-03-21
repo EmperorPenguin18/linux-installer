@@ -72,10 +72,10 @@ echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/e
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
-ln -s /mnt/etc/sv/dhcpcd /mnt/etc/runit/runsvdir/default/
+ln -sf /etc/sv/dhcpcd /mnt/etc/runit/runsvdir/default/
 check_error
-arch-chroot /mnt dhcpcd
-check_error
+#arch-chroot /mnt dhcpcd
+#check_error
 arch-chroot /mnt xbps-install -Suy xbps
 check_error
 arch-chroot /mnt xbps-install -uy
@@ -102,7 +102,7 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 check_error
 
 #Network stuff
-ln -s /mnt/etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
+ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
 check_error
 
 #Create user
@@ -115,9 +115,9 @@ check_error
 echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
 check_error
 echo "permit persist $USER" >> /mnt/etc/doas.conf
-ln -sf /mnt/usr/bin/doas /mnt/usr/bin/sudo
+ln -sf /usr/bin/doas /mnt/usr/bin/sudo
 check_error
-ln -s /mnt/etc/doas.conf /mnt/etc/sudoers
+ln -sf /etc/doas.conf /mnt/etc/sudoers
 check_error
 
 #Create encryption key
