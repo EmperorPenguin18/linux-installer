@@ -46,7 +46,7 @@ fi
 if [ "${BOOTTYPE}" = "efi" ]; then
    GRUB=""
 else
-   GRUB="grub2-pc"
+   GRUB="grub2-pc os-prober"
 fi
 
 #Get DNF
@@ -133,9 +133,9 @@ if [ "${BOOTTYPE}" = "efi" ]; then
    echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
    echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=/dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
-   arch-chroot /mnt grub2-install /dev/$DISKNAME
-   check_error
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
+   check_error
+   arch-chroot /mnt grub2-install /dev/$DISKNAME
    check_error
 fi
 
