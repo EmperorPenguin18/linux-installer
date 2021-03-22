@@ -185,7 +185,7 @@ install_distro ()
 
 set_time ()
 {
-   ln -sf /mnt/usr/share/zoneinfo/$(echo $TIME) /mnt/etc/localtime || \
+   ln -sf /usr/share/zoneinfo/$(echo $TIME) /mnt/etc/localtime || \
    return 1
 }
 
