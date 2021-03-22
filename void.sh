@@ -153,3 +153,9 @@ else
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 check_error
+
+#Weird fix
+chmod 1777 /tmp
+check_error
+chmod 1777 /var/tmp
+check_error
