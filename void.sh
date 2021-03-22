@@ -72,10 +72,8 @@ echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/e
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
-ln -sf /etc/sv/dhcpcd /mnt/etc/runit/runsvdir/default/
+arch-chroot /mnt dhcpcd
 check_error
-#arch-chroot /mnt dhcpcd
-#check_error
 arch-chroot /mnt xbps-install -Suy xbps
 check_error
 arch-chroot /mnt xbps-install -uy
@@ -102,11 +100,13 @@ echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 check_error
 
 #Network stuff
+ln -sf /etc/sv/dbus /mnt/etc/runit/runsvdir/default/
+check_error
 ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
 check_error
 
 #Create user
-arch-chroot /mnt useradd -m -s /bin/fish $USER
+arch-chroot /mnt useradd -m -s /bin/fish -G network $USER
 check_error
 mkdir /mnt/home/$USER/.snapshots
 check_error
