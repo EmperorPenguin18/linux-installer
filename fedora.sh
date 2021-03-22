@@ -135,11 +135,13 @@ if [ "${BOOTTYPE}" = "efi" ]; then
 else
    echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
    check_error
-   echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=/dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub
+   echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot) rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub
    check_error
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
    check_error
    arch-chroot /mnt grub2-install /dev/$DISKNAME
+   check_error
+   arch-chroot /mnt dnf reinstall -y kernel-core
    check_error
 fi
 
