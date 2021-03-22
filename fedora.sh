@@ -133,6 +133,10 @@ if [ "${BOOTTYPE}" = "efi" ]; then
    echo "initrd   /initrd" >> /mnt/boot/loader/entries/fedora.conf
    echo "options  cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=/dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/fedora.conf
 else
+   echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
+   check_error
+   echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot root=/dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub
+   check_error
    arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg
    check_error
    arch-chroot /mnt grub2-install /dev/$DISKNAME
