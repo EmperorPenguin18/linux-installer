@@ -36,6 +36,5 @@ curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/install.sh
 ### Known issues:
 - Can't use NVMe drives with Legacy boot
 - Minimum 2GB of memory required when installing Fedora
-- No Legacy boot on Fedora
 
 If this script doesn't work for your hardware create an issue. I can't test everything, but I'd like as much hardware as possible to work.
