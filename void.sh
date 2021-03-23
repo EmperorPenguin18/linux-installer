@@ -1,117 +1,161 @@
-#!/bin/bash
+#!/bin/sh
 
-#                __.;=====;.__
-#            _.=+==++=++=+=+===;.
-#             -=+++=+===+=+=+++++=_
-#        .     -=:``     `--==+=++==.
-#       _vi,    `            --+=++++:
-#      .uvnvi.       _._       -==+==+.
-#     .vvnvnI`    .;==|==;.     :|=||=|.
-#+QmQQmpvvnv; _yYsyQQWUUQQQm #QmQ#:QQQWUV$QQm.
-# -QQWQWpvvowZ?.wQQQE==<QWWQ/QWQW.QQWW(: jQWQE
-#  -$QQQQmmU'  jQQQ@+=<QWQQ)mQQQ.mQQQC+;jWQQ@'
-#   -$WQ8YnI:   QWQQwgQQWV`mWQQ.jQWQQgyyWW@!
-#     -1vvnvv.     `~+++`        ++|+++
-#      +vnvnnv,                 `-|===
-#       +vnvnvns.           .      :=-
-#        -Invnvvnsi..___..=sv=.     `
-#          +Invnvnvnnnnnnnnvvnn;.
-#            ~|Invnvnvvnvvvnnv}+`
-#               -~|{*l}*|~
+check_error ()
+{
+   if [ $? -ne 0 ]; then
+      echo $1
+      exit -1
+   fi
+}
+
+LGREEN='\033[1;32m'
+DGRAY='\033[1;30m'
+NC='\033[0m'
+printf "${LGREEN}                __.;=====;.__\n"
+printf "${LGREEN}            _.=+==++=++=+=+===;.\n"
+printf "${LGREEN}             -=+++=+===+=+=+++++=_\n"
+printf "${LGREEN}        .     -=:\`\`     \`--==+=++==.\n"
+printf "${LGREEN}       _vi,    \`            --+=++++:\n"
+printf "${LGREEN}      .uvnvi.       _._       -==+==+.\n"
+printf "${LGREEN}     .vvnvnI\`    .;==|==;.     :|=||=|.\n"
+printf "${DGRAY}+QmQQm${LGREEN}pvvnv; ${DGRAY}_yYsyQQWUUQQQm #QmQ#${LGREEN}:${DGRAY}QQQWUV\$QQm.\n"
+printf "${DGRAY} -QQWQW${LGREEN}pvvo${DGRAY}wZ?.wQQQE${LGREEN}==<${DGRAY}QWWQ/QWQW.QQWW${LGREEN}(: ${DGRAY}jQWQE\n"
+printf "${DGRAY}  -\$QQQQmmU'  jQQQ@${LGREEN}+=<${DGRAY}QWQQ)mQQQ.mQQQC${LGREEN}+;${DGRAY}jWQQ@'\n"
+printf "${DGRAY}   -\$WQ8Y${LGREEN}nI:   ${DGRAY}QWQQwgQQWV${LGREEN}\`${DGRAY}mWQQ.jQWQQgyyWW@!\n"
+printf "${LGREEN}     -1vvnvv.     \`~+++\`        ++|+++\n"
+printf "${LGREEN}      +vnvnnv,                 \`-|===\n"
+printf "${LGREEN}       +vnvnvns.           .      :=-\n"
+printf "${LGREEN}        -Invnvvnsi..___..=sv=.     \`\n"
+printf "${LGREEN}          +Invnvnvnnnnnnnnvvnn;.\n"
+printf "${LGREEN}            ~|Invnvnvvnvvvnnv}+\`\n"
+printf "${LGREEN}               -~|{*l}*|~\n${NC}"
 
 BOOTTYPE=$1
-time=$2
-host=$3
-pass=$4
-user=$5
-DISKNAME=$6
-virtual=$(dmidecode -s system-product-name)
-ROOTNAME=$7
+PASS=$2
+USER=$3
+DISKNAME=$4
+VIRTUAL=$(dmidecode -s system-product-name)
+ROOTNAME=$5
 
 #Set variables
-if [[ $(cat /proc/cpuinfo | grep name | grep Intel | wc -l) -gt 0 ]]; then
-   cpu="iucode-tool intel-ucode"
+if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
+   CPU="iucode-tool intel-ucode"
 else
-   cpu="linux-firmware-amd"
+   CPU="linux-firmware-amd"
 fi
-if [[ $virtual = "VirtualBox" ]]; then
-   virtual="virtualbox-ose-guest virtualbox-ose-guest-dkms"
-elif [[ $virtual = "KVM" ]]; then
-   virtual="qemu-ga"
+if [ "${VIRTUAL}" = "VirtualBox" ]; then
+   VIRTUAL="virtualbox-ose-guest virtualbox-ose-guest-dkms"
+elif [ "${VIRTUAL}" = "KVM" ]; then
+   VIRTUAL="qemu-ga"
 else
-   virtual=""
+   VIRTUAL=""
 fi
-if [[ $BOOTTYPE = "efi" ]]; then
-   grub="grub-x86_64-efi"
+if [ "${BOOTTYPE}" = "efi" ]; then
+   GRUB="grub-x86_64-efi"
 else
-   grub="grub"
+   GRUB="grub"
 fi
 
 #Install the base system
 cp /mnt/etc/fstab fstab.bak
+check_error
 wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2)
+check_error
 tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt
+check_error
 mv fstab.bak /mnt/etc/fstab
+check_error
 echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf
+check_error
 echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf
 echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf
 echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf
-arch-chroot /mnt ln -s /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 arch-chroot /mnt dhcpcd
+check_error
 arch-chroot /mnt xbps-install -Suy xbps
+check_error
 arch-chroot /mnt xbps-install -uy
+check_error
 arch-chroot /mnt xbps-install -y base-system
+check_error
 arch-chroot /mnt xbps-remove -y base-voidstrap sudo
+check_error
 rm void-x86_64-ROOTFS-*.tar.xz
+check_error
 
 #Install packages
-arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $grub grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $cpu opendoas NetworkManager git $virtual cryptsetup
+arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup fish-shell
+check_error
 arch-chroot /mnt xbps-reconfigure -fa
+check_error
 
 #Set localization stuff
-ln -sf /mnt/usr/share/zoneinfo/$(echo $time) /mnt/etc/localtime
-arch-chroot /mnt hwclock --systohc
 echo "en_US.UTF-8 UTF-8" > /mnt/etc/default/libc-locales
+check_error
 arch-chroot /mnt xbps-reconfigure -f glibc-locales
+check_error
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
+check_error
 
 #Network stuff
-echo $host > /mnt/etc/hostname
-echo "127.0.0.1   localhost" > /mnt/etc/hosts
-echo "::1   localhost" >> /mnt/etc/hosts
-echo "127.0.1.1   $(echo $host).localdomain  $host" >> /mnt/etc/hosts
-arch-chroot /mnt ln -s /etc/sv/NetworkManager /var/service/
-
-#Create root password
-printf "$pass\n$pass\n" | arch-chroot /mnt passwd
+ln -sf /etc/sv/dbus /mnt/etc/runit/runsvdir/default/
+check_error
+ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
+check_error
 
 #Create user
-arch-chroot /mnt useradd -m -s /bin/bash $user
-printf "$pass\n$pass\n" | arch-chroot /mnt passwd $user
-echo "permit persist $user" > /mnt/etc/doas.conf
-mkdir /home/$user/.snapshots
+arch-chroot /mnt useradd -m -s /bin/fish -G network $USER
+check_error
+mkdir /mnt/home/$USER/.snapshots
+check_error
+
+#Configure doas
+echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf
+check_error
+echo "permit persist $USER" >> /mnt/etc/doas.conf
+ln -sf /usr/bin/doas /mnt/usr/bin/sudo
+check_error
+ln -sf /etc/doas.conf /mnt/etc/sudoers
+check_error
 
 #Create encryption key
-arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-arch-chroot /mnt chmod 600 /boot/initramfs*
-echo "$pass" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
+check_error
+chmod 600 /mnt/crypto_keyfile.bin
+check_error
+chmod 600 /mnt/boot/initramfs*
+check_error
+echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
+check_error
 
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
+check_error
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
 echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
 echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt/usr/lib/modules).img -k $(ls /mnt/usr/lib/modules)
+check_error
 
 #Create bootloader
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
+check_error
 echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot\"" >> /mnt/etc/default/grub
-if [[ $BOOTTYPE = "efi" ]]; then
-   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+check_error
+if [ "${BOOTTYPE}" = "efi" ]; then
+   arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck
+   check_error
 else
    arch-chroot /mnt grub-install /dev/$DISKNAME
+   check_error
 fi
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+check_error
+
+#Weird fix
+chmod 1777 /mnt/tmp
+check_error
+chmod 1777 /mnt/var/tmp
+check_error
