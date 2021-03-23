@@ -141,7 +141,7 @@ else
    check_error
    arch-chroot /mnt grub2-install /dev/$DISKNAME
    check_error
-   arch-chroot /mnt dnf reinstall -y kernel-core
+   arch-chroot /mnt dracut --force --regenerate-all
    check_error
 fi
 
