@@ -78,7 +78,7 @@ echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
 check_error
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
 echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
-echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
+echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard resume fsck)" >> /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -P
 check_error
 
