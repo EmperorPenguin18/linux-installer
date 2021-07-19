@@ -1,3 +1,6 @@
+#linux-installer by Sebastien MacDougall-Landry
+#License is available at
+#https://github.com/EmperorPenguin18/linux-installer/blob/main/LICENSE
 #!/bin/sh
 
 check_error ()
@@ -99,12 +102,6 @@ check_error
 echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf
 check_error
 
-#Network stuff
-ln -sf /etc/sv/dbus /mnt/etc/runit/runsvdir/default/
-check_error
-ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/
-check_error
-
 #Create user
 arch-chroot /mnt useradd -m -s /bin/fish -G network $USER
 check_error
@@ -120,23 +117,15 @@ check_error
 ln -sf /etc/doas.conf /mnt/etc/sudoers
 check_error
 
-#Create encryption key
-dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
-check_error
-chmod 600 /mnt/crypto_keyfile.bin
-check_error
-chmod 600 /mnt/boot/initramfs*
-check_error
-echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /crypto_keyfile.bin
-check_error
-
 #Setup initramfs HOOKS
 echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
 check_error
 echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
-echo "FILES=(/crypto_keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
+echo "FILES=(/etc/keys/keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
 echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf
 arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt/usr/lib/modules).img -k $(ls /mnt/usr/lib/modules)
+check_error
+chmod 600 /mnt/boot/initramfs*
 check_error
 
 #Create bootloader
