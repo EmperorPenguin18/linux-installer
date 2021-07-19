@@ -1,3 +1,6 @@
+#linux-installer by Sebastien MacDougall-Landry
+#License is available at
+#https://github.com/EmperorPenguin18/linux-installer/blob/main/LICENSE
 #!/bin/sh
 
 check_error ()
@@ -52,7 +55,7 @@ fi
 #Get DNF
 if [ "$(df | grep /run/archiso/cowspace | wc -l)" -gt 0 ]; then mount -o remount,size=2G /run/archiso/cowspace; fi
 check_error
-wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/33/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
+wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/34/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/34/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
 check_error
 DEVICE=$(losetup --show -fP fedora.img)
 check_error
@@ -76,17 +79,13 @@ mount -o bind /mnt /media/loop/mnt
 check_error
 sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
 check_error
-arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=33 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
+arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=34 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
 check_error
 arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
 check_error
 
 #Install packages
 arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel $GRUB passwd linux-firmware btrfs-progs dosfstools $CPU microcode_ctl git $VIRTUAL cryptsetup-luks sudo fish
-check_error
-
-#Network stuff
-arch-chroot /mnt systemctl enable NetworkManager
 check_error
 
 #Create user
@@ -96,16 +95,10 @@ echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 check_error
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
-#Create encryption key
-dd if=/dev/urandom of=/mnt/keyfile bs=32 count=1
+#Setup initramfs
+echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks" > /mnt/etc/crypttab
 check_error
-chmod 600 /mnt/keyfile
-check_error
-echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /keyfile
-check_error
-echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /keyfile luks" > /mnt/etc/crypttab
-check_error
-echo 'install_items+=" /keyfile /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
+echo 'install_items+=" /etc/keys/keyfile.bin /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
 check_error
 
 #Create bootloader
