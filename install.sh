@@ -1,3 +1,6 @@
+#linux-installer by Sebastien MacDougall-Landry
+#License is available at
+#https://github.com/EmperorPenguin18/linux-installer/blob/main/LICENSE
 #!/bin/sh
 
 pre_checks ()
@@ -21,43 +24,6 @@ pre_checks ()
    pacman -Sy >/dev/null 2>&1
    pacman -Q | awk '{print $1}' > pre.txt
    pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
-}
-
-user_prompts ()
-{
-   mv /usr/share/zoneinfo/right /usr/share/right
-   mv /usr/share/zoneinfo/posix /usr/share/posix
-   lsblk | awk '/disk/ {print $1 " " $4 " off"}' > disks.txt
-   find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sed -e 's/$/ "" off/' > zones.txt
-   TEMP=$(dialog --stdout \
-      --msgbox "Welcome to linux-installer! Please answer the following questions to begin." 0 0 \
-      --and-widget --clear --radiolist "Choose disk to install to." 0 0 $(wc -l < disks.txt) --file disks.txt \
-      --and-widget --clear --radiolist "What distro do you want to install?" 0 0 0 arch "" on debian "" off fedora "" off void "" off \
-      --and-widget --clear --radiolist "Choose a timezone." 0 0 $(wc -l < zones.txt) --file zones.txt \
-      --and-widget --clear --inputbox "What will the hostname of this computer be?" 0 0 \
-      --and-widget --clear --inputbox "Enter your username." 0 0 \
-      --and-widget --clear --passwordbox "Enter your password." 0 0 \
-      --and-widget --clear --passwordbox "Confirm password." 0 0 \
-   )
-   rm disks.txt zones.txt
-   if [ "$(echo $TEMP | awk '{print $6}')" != "$(echo $TEMP | awk '{print $7}')" ]; then echo "Passwords do not match"; exit 1; fi
-   DISKNAME=$(echo $TEMP | awk '{print $1}')
-   DISTRO=$(echo $TEMP | awk '{print $2}')
-   TIME=$(echo $TEMP | awk '{print $3}')
-   HOST=$(echo $TEMP | awk '{print $4}')
-   USER=$(echo $TEMP | awk '{print $5}')
-   PASS=$(echo $TEMP | awk '{print $6}')
-   if dialog --yesno "Do you want hibernation enabled (Swap partition)" 0 0; then
-      SWAP=y
-   else
-      SWAP=n
-   fi
-   if dialog --default-button "no" --yesno "This will delete all data on selected storage device. Are you sure you want to continue?" 0 0; then
-      SURE=y
-   else
-      exit 1
-   fi
-   clear
 }
 
 setup_partitions ()
@@ -179,8 +145,29 @@ generate_fstab ()
 
 install_distro ()
 {
-   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2 || \
+   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/distros/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2 || \
    return 1
+}
+
+encryption_key ()
+{
+   mkdir -m 0700 /mnt/etc/keys && \
+   dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/keyfile.bin conv=excl,fsync iflag=fullblock && \
+   chmod 600 /mnt/etc/keys/keyfile.bin && \
+   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin || \
+   return 1
+}
+
+enable_network ()
+{
+   if readlink /sbin/init | grep systemd >/dev/null; then
+      arch-chroot /mnt systemctl enable NetworkManager || \
+      return 1
+   else
+      ln -sf /etc/sv/dbus /mnt/etc/runit/runsvdir/default/ && \
+      ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/ || \
+      return 1
+   fi
 }
 
 set_time ()
@@ -210,8 +197,6 @@ clean_up ()
    pacman -Q | awk '{print $1}' > post.txt
    [ "$(diff pre.txt post.txt | wc -l)" -gt 0 ] && pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1
    rm pre.txt post.txt && \
-   mv /usr/share/right /usr/share/zoneinfo/right && \
-   mv /usr/share/posix /usr/share/zoneinfo/posix && \
    umount /mnt/boot && \
    umount -A /dev/mapper/cryptroot && \
    cryptsetup close /dev/mapper/cryptroot || \
@@ -227,7 +212,11 @@ check_error ()
 }
 
 pre_checks
+
+if [ -z "$1" ] && wget https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
+source prompts.sh
 user_prompts
+
 echo "-------------------------------------------------"
 echo "                Partitioning disk                "
 echo "-------------------------------------------------"
@@ -253,6 +242,10 @@ check_error "Install distro failed"
 echo "-------------------------------------------------"
 echo "                  Finishing up                   "
 echo "-------------------------------------------------"
+encryption_key
+check_error "Encryption key failed"
+enable_network
+check_error "Enable network failed"
 set_time
 check_error "Set time failed"
 set_hostname
