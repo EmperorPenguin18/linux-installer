@@ -1,3 +1,6 @@
+#linux-installer by Sebastien MacDougall-Landry
+#License is available at
+#https://github.com/EmperorPenguin18/linux-installer/blob/main/LICENSE
 #!/bin/sh
 
 check_error ()
@@ -82,10 +85,6 @@ check_error
 arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-image | awk '{print $2}') $GRUB
 check_error
 
-#Network stuff
-arch-chroot /mnt systemctl enable NetworkManager
-check_error
-
 #Create user
 arch-chroot /mnt addgroup wheel
 check_error
@@ -95,16 +94,10 @@ echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers
 check_error
 echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers
 
-#Create encryption key
-mkdir -m 0700 /mnt/etc/keys
+#Setup initramfs
+echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,discard,key-slot=1" > /mnt/etc/crypttab
 check_error
-dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/root.key conv=excl,fsync
-check_error
-echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/root.key
-check_error
-echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/root.key luks,discard,key-slot=1" > /mnt/etc/crypttab
-check_error
-echo "KEYFILE_PATTERN=\"/etc/keys/*.key\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook
+echo "KEYFILE_PATTERN=\"/etc/keys/key*\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook
 check_error
 echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf
 check_error
