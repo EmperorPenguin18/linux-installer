@@ -58,16 +58,41 @@ set_locale ()
 
 set_initramfs ()
 {
+   printf "run_hook ()
+   {
+      ## Optional: To avoid race conditions
+      x=0;
+      while [ ! -b /dev/mapper/<root-device> ] && [ \$x -le 10 ]; do
+         x=\$((x+1))
+         sleep .2
+      done
+      ## End of optional
+      
+      mkdir crypto_key_device
+      mount /dev/mapper/cryptroot crypto_key_device
+      cryptsetup open --key-file crypto_key_device/etc/keys/keyfile.bin /dev/$(echo $DISKNAME2)3 swapDevice
+      umount crypto_key_device
+   }" > /mnt/etc/initcpio/hooks/openswap
+   printf "build ()
+   {
+      add_runscript
+   }
+   help ()
+   {
+   cat<<HELPEOF
+      This opens the swap encrypted partition /dev/<device> in /dev/mapper/swapDevice
+   HELPEOF
+   }" > /mnt/etc/initcpio/install/openswap
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf
    echo "FILES=(/etc/keys/keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
-   echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard resume fsck)" >> /mnt/etc/mkinitcpio.conf && \
+   echo "HOOKS=(base udev encrypt openswap autodetect modconf block filesystems keyboard resume fsck)" >> /mnt/etc/mkinitcpio.conf && \
    arch-chroot /mnt mkinitcpio -P && \
    chmod 600 /mnt/boot/initramfs-linux* || \
    return 1
 }
 
-craete_user ()
+create_user ()
 {
    arch-chroot /mnt useradd -m -s /bin/fish -G video $USER && \
    echo "#This system uses doas instead of sudo" > /mnt/etc/doas.conf && \
