@@ -68,6 +68,7 @@ set_initramfs ()
    rm -r /mnt/PKGBUILD /mnt/pkg /mnt/src /mnt/mkinitcpio* /mnt/openswap* /mnt/usage.install /mnt/LICENSE /mnt/home/$USER/mkinitcpio-openswap && \
    sed -i "s|2788eb78-074d-4424-9f1d-ebffc9c37262|$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3)|g" /mnt/etc/openswap.conf && \
    sed -i 's|etc/keyfile-cryptswap|etc/keys/keyfile.bin|g' /mnt/etc/openswap.conf && \
+   sed -i 's|#keyfile_device_mount_options="--options=subvol=__active/__"|keyfile_device_mount_options="--options=subvol=@"|g' /mnt/etc/openswap.conf && \
    echo "MODULES=()" > /mnt/etc/mkinitcpio.conf && \
    echo "BINARIES=()" >> /mnt/etc/mkinitcpio.conf && \
    echo "FILES=(/etc/keys/keyfile.bin)" >> /mnt/etc/mkinitcpio.conf && \
