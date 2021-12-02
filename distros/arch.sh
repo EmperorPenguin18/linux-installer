@@ -60,6 +60,8 @@ set_initramfs ()
 {
    arch-chroot /mnt su $USER -c "git clone https://aur.archlinux.org/mkinitcpio-openswap.git /home/$USER/mkinitcpio-openswap" && \
    mv /mnt/home/$USER/mkinitcpio/* /mnt && \
+   sed -i "s|2788eb78-074d-4424-9f1d-ebffc9c37262|$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3)|g" /mnt/openswap.conf && \
+   sed -i 's|etc/keyfile-cryptswap|etc/keys/keyfile.bin|g' /mnt/openswap.conf && \
    chmod 777 /mnt && \
    arch-chroot /mnt su $USER -c "makepkg --noconfirm" && \
    arch-chroot /mnt pacman -U $(ls /mnt | grep mkinitcpio) --noconfirm && \
