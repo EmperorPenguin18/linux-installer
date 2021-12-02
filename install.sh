@@ -88,7 +88,7 @@ encrypt_partitions ()
    echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$ROOTNAME && \
    echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$(echo $DISKNAME2)3 &&\
    echo "$PASS" | cryptsetup open /dev/$ROOTNAME cryptroot && \
-   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)3 swapDevice || \
+   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)3 cryptswap || \
    return 1
 }
 
@@ -99,8 +99,8 @@ format_partitions ()
    mount /dev/mapper/cryptroot /mnt || \
    return 1
    if [ "${SWAP}" != "n" ]; then
-      mkswap /dev/mapper/swapDevice && \
-      swapon /dev/mapper/swapDevice || \
+      mkswap /dev/mapper/cryptswap && \
+      swapon /dev/mapper/cryptswap || \
       return 1
    fi
 }
@@ -132,7 +132,7 @@ generate_fstab ()
    echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab && \
    UUID2=$(blkid -s UUID -o value /dev/mapper/cryptroot) || \
    return 1
-   if [ "${SWAP}" != "n" ]; then echo UUID=$(blkid -s UUID -o value /dev/mapper/swapDevice) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
+   if [ "${SWAP}" != "n" ]; then echo UUID=$(blkid -s UUID -o value /dev/mapper/cryptswap) swap  swap  defaults 0  0 >> /mnt/etc/fstab; fi
    if [ "$(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l)" -eq 1 ]; then
       echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
       echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
@@ -196,9 +196,7 @@ clean_up ()
    rm pre.txt post.txt && \
    umount /mnt/boot && \
    umount -A /dev/mapper/cryptroot && \
-   umount -A /dev/mapper/swapDevice && \
-   cryptsetup close /dev/mapper/cryptroot && \
-   cryptsetup close /dev/mapper/swapDevice || \
+   cryptsetup close /dev/mapper/cryptroot || \
    return 1
 }
 
@@ -212,7 +210,7 @@ check_error ()
 
 pre_checks
 
-[ -z "$1" ] && wget https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
+[ -z "$1" ] && wget -O prompts.sh https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
 source ./prompts.sh
 user_prompts
 
@@ -237,7 +235,7 @@ echo "-------------------------------------------------"
 echo "                Installing distro                "
 echo "-------------------------------------------------"
 
-wget https://raw.github.com/EmperorPenguin18/linux-installer/main/distros/$(echo $DISTRO).sh
+wget -O $(echo $DISTRO).sh https://raw.github.com/EmperorPenguin18/linux-installer/main/distros/$(echo $DISTRO).sh
 source ./$(echo $DISTRO).sh
 print_logo
 check_error "Print logo failed"
