@@ -212,8 +212,8 @@ check_error ()
 
 pre_checks
 
-if [ -z "$1" ] && wget https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
-source prompts.sh
+[ -z "$1" ] && wget https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
+source ./prompts.sh
 user_prompts
 
 echo "-------------------------------------------------"
@@ -238,7 +238,7 @@ echo "                Installing distro                "
 echo "-------------------------------------------------"
 
 wget https://raw.github.com/EmperorPenguin18/linux-installer/main/distros/$(echo $DISTRO).sh
-source $(echo $DISTRO).sh
+source ./$(echo $DISTRO).sh
 print_logo
 check_error "Print logo failed"
 install_packages
