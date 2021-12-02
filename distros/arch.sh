@@ -62,7 +62,7 @@ set_initramfs ()
    {
       ## Optional: To avoid race conditions
       x=0;
-      while [ ! -b /dev/mapper/<root-device> ] && [ \$x -le 10 ]; do
+      while [ ! -b /dev/mapper/cryptroot ] && [ \$x -le 10 ]; do
          x=\$((x+1))
          sleep .2
       done
