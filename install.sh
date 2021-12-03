@@ -151,9 +151,9 @@ encryption_key ()
    mkdir -m 0700 /mnt/etc/keys && \
    dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/keyfile.bin conv=excl,fsync iflag=fullblock && \
    chmod 600 /mnt/etc/keys/keyfile.bin && \
-   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin && \
-   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$(echo $DISKNAME2)3 /etc/keys/keyfile.bin || \
+   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin || \
    return 1
+   if [ "${SWAP}" != "n" ]; then echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$(echo $DISKNAME2)3 /etc/keys/keyfile.bin; fi
 }
 
 enable_network ()
