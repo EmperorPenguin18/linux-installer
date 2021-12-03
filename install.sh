@@ -151,7 +151,8 @@ encryption_key ()
    mkdir -m 0700 /mnt/etc/keys && \
    dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/keyfile.bin conv=excl,fsync iflag=fullblock && \
    chmod 600 /mnt/etc/keys/keyfile.bin && \
-   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin || \
+   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin && \
+   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$(echo $DISKNAME2)3 /etc/keys/keyfile.bin || \
    return 1
 }
 
@@ -245,12 +246,12 @@ set_locale
 check_error "Set locale failed"
 encryption_key
 check_error "Encryption key failed"
+create_user
+check_error "Create user failed"
 set_initramfs
 check_error "Set initramfs failed"
 enable_network
 check_error "Enable network failed"
-create_user
-check_error "Create user failed"
 create_bootloader
 check_error "Create bootloader failed"
 distro_clean
