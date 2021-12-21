@@ -49,7 +49,7 @@ install_packages ()
       GRUB="grub"
    fi
    cp /mnt/etc/fstab fstab.bak && \
-   wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2) && \
+   wget https://repo-us.voidlinux.org/live/current/$(curl -s https://repo-us.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2) && \
    tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt && \
    mv fstab.bak /mnt/etc/fstab && \
    echo "repository=https://repo-us.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf && \
