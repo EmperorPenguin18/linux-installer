@@ -133,6 +133,6 @@ create_bootloader ()
 distro_clean ()
 {
    chmod 1777 /mnt/tmp && \
-   chmod 1777 /mnt/var/tmp && \
+   chmod 1777 /mnt/var/tmp || \
    return 1
 }
