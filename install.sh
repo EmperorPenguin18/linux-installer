@@ -158,7 +158,7 @@ encryption_key ()
 
 enable_network ()
 {
-   if readlink /sbin/init | grep systemd >/dev/null; then
+   if arch-chroot /mnt readlink /sbin/init | grep systemd >/dev/null; then
       arch-chroot /mnt systemctl enable NetworkManager || \
       return 1
    else
