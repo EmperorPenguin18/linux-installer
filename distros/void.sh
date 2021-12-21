@@ -52,10 +52,10 @@ install_packages ()
    wget https://alpha.us.repo.voidlinux.org/live/current/$(curl -s https://alpha.us.repo.voidlinux.org/live/current/ | grep void-x86_64-ROOTFS | cut -d '"' -f 2) && \
    tar xvf void-x86_64-ROOTFS-*.tar.xz -C /mnt && \
    mv fstab.bak /mnt/etc/fstab && \
-   echo "repository=https://alpha.us.repo.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf && \
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf && \
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf && \
-   echo "repository=https://alpha.us.repo.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf && \
+   echo "repository=https://repo-us.voidlinux.org/current" > /mnt/etc/xbps.d/xbps.conf && \
+   echo "repository=https://repo-us.voidlinux.org/current/nonfree" >> /mnt/etc/xbps.d/xbps.conf && \
+   echo "repository=https://repo-us.voidlinux.org/current/multilib" >> /mnt/etc/xbps.d/xbps.conf && \
+   echo "repository=https://repo-us.voidlinux.org/current/multilib/nonfree" >> /mnt/etc/xbps.d/xbps.conf && \
    echo "ignorepkg=sudo" >> /mnt/etc/xbps.d/xbps.conf && \
    echo "ignorepkg=dracut" >> /mnt/etc/xbps.d/xbps.conf && \
    arch-chroot /mnt dhcpcd && \
