@@ -95,11 +95,11 @@ set_initramfs ()
    echo "FILES=(/etc/keys/keyfile.bin)" >> /mnt/etc/mkinitcpio.conf
    if [ "${SWAP}" != "n" ]
    then
-      git clone https://aur.archlinux.org/mkinitcpio-openswap.git && \
-      install -Dm 644 mkinitcpio-openswap/openswap.hook /usr/lib/initcpio/hooks/openswap && \
-      install -Dm 644 mkinitcpio-openswap/openswap.install /usr/lib/initcpio/install/openswap && \
-      install -Dm 644 mkinitcpio-openswap/openswap.conf /etc/openswap.conf && \
-      rm -r mkinitcpio-openswap && \
+      arch-chroot /mnt git clone https://aur.archlinux.org/mkinitcpio-openswap.git && \
+      install -Dm 644 /mnt/mkinitcpio-openswap/openswap.hook /mnt/usr/lib/initcpio/hooks/openswap && \
+      install -Dm 644 /mnt/mkinitcpio-openswap/openswap.install /mnt/usr/lib/initcpio/install/openswap && \
+      install -Dm 644 /mnt/mkinitcpio-openswap/openswap.conf /mnt/etc/openswap.conf && \
+      rm -r /mnt/mkinitcpio-openswap && \
       sed -i "s|2788eb78-074d-4424-9f1d-ebffc9c37262|$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3)|g" /mnt/etc/openswap.conf && \
       sed -i 's|etc/keyfile-cryptswap|etc/keys/keyfile.bin|g' /mnt/etc/openswap.conf && \
       sed -i 's|#keyfile_device_mount_options="--options=subvol=__active/__"|keyfile_device_mount_options="--options=subvol=_active/rootvol"|g' /mnt/etc/openswap.conf && \
