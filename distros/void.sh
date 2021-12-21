@@ -64,7 +64,7 @@ install_packages ()
    arch-chroot /mnt xbps-install -y base-system && \
    arch-chroot /mnt xbps-remove -y base-voidstrap sudo && \
    rm void-x86_64-ROOTFS-*.tar.xz && \
-   arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt mkinitcpio-udev $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup fish-shell && \
+   arch-chroot /mnt xbps-install -Sy linux linux-firmware mkinitcpio mkinitcpio-encrypt $GRUB grub-btrfs efibootmgr os-prober btrfs-progs dosfstools $CPU opendoas NetworkManager git $VIRTUAL cryptsetup fish-shell && \
    arch-chroot /mnt xbps-reconfigure -fa || \
    return 1
 }
