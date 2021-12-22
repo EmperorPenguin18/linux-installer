@@ -117,7 +117,7 @@ set_initramfs ()
 create_bootloader ()
 {
    echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub && \
-   echo "GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=\/dev\/mapper\/cryptswap\"" >> /mnt/etc/default/grub || \
+   echo "GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot rootflags=subvol=_active/rootvol resume=\/dev\/mapper\/cryptswap\"" >> /mnt/etc/default/grub || \
    return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
       arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
