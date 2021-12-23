@@ -63,7 +63,7 @@ set_locale ()
 create_user ()
 {
    arch-chroot /mnt addgroup wheel && \
-   arch-chroot /mnt useradd -m -s /bin/fish -G wheel $USER && \
+   arch-chroot /mnt useradd -m -s /usr/bin/fish -G wheel $USER && \
    echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers && \
    echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers || \
    return 1
@@ -72,7 +72,7 @@ create_user ()
 set_initramfs ()
 {
    echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,discard,key-slot=1" > /mnt/etc/crypttab && \
-   echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,swap,key-slot=1" >> /mnt/etc/crypttab && \
+   echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3) /etc/keys/keyfile.bin luks,swap,key-slot=1" >> /mnt/etc/crypttab && \
    echo "KEYFILE_PATTERN=\"/etc/keys/key*\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook && \
    echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf && \
    arch-chroot /mnt update-initramfs -u || \
