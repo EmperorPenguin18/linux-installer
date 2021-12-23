@@ -72,7 +72,7 @@ create_user ()
 set_initramfs ()
 {
    echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,discard,key-slot=1" > /mnt/etc/crypttab && \
-   echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,swap,key-slot=1" > /mnt/etc/crypttab && \
+   echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,swap,key-slot=1" >> /mnt/etc/crypttab && \
    echo "KEYFILE_PATTERN=\"/etc/keys/key*\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook && \
    echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf && \
    arch-chroot /mnt update-initramfs -u || \
