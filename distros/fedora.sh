@@ -55,7 +55,9 @@ fi
 #Get DNF
 if [ "$(df | grep /run/archiso/cowspace | wc -l)" -gt 0 ]; then mount -o remount,size=2G /run/archiso/cowspace; fi
 check_error
-wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/34/Cloud/x86_64/images/$(curl -Ls https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/34/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) | xzcat >fedora.img
+NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1)
+IMAGE=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz)
+wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Cloud/x86_64/images/$IMAGE | xzcat >fedora.img
 check_error
 DEVICE=$(losetup --show -fP fedora.img)
 check_error
@@ -79,7 +81,7 @@ mount -o bind /mnt /media/loop/mnt
 check_error
 sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot
 check_error
-arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=34 --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
+arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager
 check_error
 arch-chroot /mnt localedef -c -i en_US -f UTF-8 en_US-UTF-8
 check_error
