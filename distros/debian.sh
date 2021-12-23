@@ -26,6 +26,14 @@ print_logo ()
    printf "${RED}              \`\"\"\"\n${NC}"
 }
 
+set_locale ()
+{
+   echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen && \
+   arch-chroot /mnt locale-gen && \
+   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf || \
+   return 1
+}
+
 install_packages ()
 {
    if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
@@ -34,7 +42,7 @@ install_packages ()
       CPU="amd64"
    fi
    if [ "${BOOTTYPE}" = "efi" ]; then
-      GRUB="grub-efi efibootmgr"
+      GRUB="grub-efi"
    else
       GRUB="grub2"
    fi
@@ -42,21 +50,14 @@ install_packages ()
    debootstrap --arch amd64 stable /mnt http://deb.debian.org/debian && \
    sed -i '$s|^|DEBIAN_FRONTEND=noninteractive PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales && \
+   set_locale && \
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add - && \
    arch-chroot /mnt apt update && \
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB grub-installer btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
    arch-chroot /mnt apt purge -y nano vim-common && \
    arch-chroot /mnt apt upgrade -y && \
    arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-image | awk '{print $2}') $GRUB || \
-   return 1
-}
-
-set_locale ()
-{
-   echo "en_US.UTF-8 UTF-8" > /mnt/etc/locale.gen && \
-   arch-chroot /mnt locale-gen && \
-   echo "LANG=en_US.UTF-8" > /mnt/etc/locale.conf || \
    return 1
 }
 
@@ -97,5 +98,6 @@ create_bootloader ()
 
 distro_clean ()
 {
-   return 0
+   arch-chroot /mnt apt clean || \
+   return 1
 }
