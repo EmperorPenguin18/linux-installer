@@ -86,7 +86,7 @@ create_bootloader ()
    sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=\/dev\/mapper\/cryptswap\"/g" /mnt/etc/default/grub || \
    return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
-      arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
+      arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi || \
       return 1
    else
       arch-chroot /mnt grub-install /dev/$DISKNAME || \
