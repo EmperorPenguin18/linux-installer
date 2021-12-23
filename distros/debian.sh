@@ -42,7 +42,7 @@ install_packages ()
       CPU="amd64"
    fi
    if [ "${BOOTTYPE}" = "efi" ]; then
-      GRUB="grub-efi"
+      GRUB="grub-efi-amd64"
    else
       GRUB="grub2"
    fi
@@ -52,7 +52,8 @@ install_packages ()
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales && \
    set_locale && \
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
-   echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add - && \
+   echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && \
+   wget -qO - https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /mnt/usr/share/keyrings/xanmod-archive-keyring.gpg && \
    arch-chroot /mnt apt update && \
    arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
    arch-chroot /mnt apt purge -y nano vim-common && \
@@ -86,6 +87,7 @@ create_bootloader ()
    sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=\/dev\/mapper\/cryptswap\"/g" /mnt/etc/default/grub || \
    return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
+      mkdir /mnt/boot/efi && \
       arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi || \
       return 1
    else
