@@ -39,7 +39,7 @@ install_packages ()
       GRUB="grub2"
    fi
    pacman -S debootstrap debian-archive-keyring --noconfirm && \
-   debootstrap --arch amd64 buster /mnt http://deb.debian.org/debian && \
+   debootstrap --arch amd64 stable /mnt http://deb.debian.org/debian && \
    sed -i '$s|^|DEBIAN_FRONTEND=noninteractive PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales && \
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
@@ -72,6 +72,7 @@ create_user ()
 set_initramfs ()
 {
    echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,discard,key-slot=1" > /mnt/etc/crypttab && \
+   echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,swap,key-slot=1" > /mnt/etc/crypttab && \
    echo "KEYFILE_PATTERN=\"/etc/keys/key*\"" >> /mnt/etc/cryptsetup-initramfs/conf-hook && \
    echo "UMASK=0077" >> /mnt/etc/initramfs-tools/initramfs.conf && \
    arch-chroot /mnt update-initramfs -u || \
