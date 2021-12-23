@@ -34,7 +34,7 @@ install_packages ()
       CPU="amd64"
    fi
    if [ "${BOOTTYPE}" = "efi" ]; then
-      GRUB=""
+      GRUB="grub-efi efibootmgr"
    else
       GRUB="grub2"
    fi
@@ -45,7 +45,7 @@ install_packages ()
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && wget -qO - https://dl.xanmod.org/gpg.key | arch-chroot /mnt apt-key add - && \
    arch-chroot /mnt apt update && \
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
+   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB grub-installer btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
    arch-chroot /mnt apt purge -y nano vim-common && \
    arch-chroot /mnt apt upgrade -y && \
    arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-image | awk '{print $2}') $GRUB || \
@@ -81,23 +81,18 @@ set_initramfs ()
 
 create_bootloader ()
 {
+   echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub && \
+   sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=\/dev\/mapper\/cryptswap\"/g" /mnt/etc/default/grub || \
+   return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
-      arch-chroot /mnt bootctl install && \
-      echo "default  debian.conf" > /mnt/boot/loader/loader.conf && \
-      echo "timeout  4" >> /mnt/boot/loader/loader.conf && \
-      echo "editor   no" >> /mnt/boot/loader/loader.conf && \
-      echo "title Debian" > /mnt/boot/loader/entries/debian.conf && \
-      echo "linux /$(ls /mnt/boot | grep vmlinuz)" >> /mnt/boot/loader/entries/debian.conf && \
-      echo "initrd   /$(ls /mnt/boot | grep .img)" >> /mnt/boot/loader/entries/debian.conf && \
-      echo "options  cryptkey=rootfs:/etc/keys/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=/dev/mapper/cryptswap root=dev/mapper/cryptroot rootflags=subvol=/_active/rootvol rw" >> /mnt/boot/loader/entries/debian.conf || \
+      arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
       return 1
    else
-      echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub && \
-      sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:\/etc\/keys\/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=\/dev\/mapper\/cryptswap\"/g" /mnt/etc/default/grub && \
-      arch-chroot /mnt grub-install /dev/$DISKNAME && \
-      arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg || \
+      arch-chroot /mnt grub-install /dev/$DISKNAME || \
       return 1
    fi
+   arch-chroot /mnt update-grub || \
+   return 1
 }
 
 distro_clean ()
