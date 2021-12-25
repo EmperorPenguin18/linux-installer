@@ -23,7 +23,8 @@ print_logo ()
    printf "${RED}     \`\$\$b.\n"
    printf "${RED}       \`Y\$\$b.\n"
    printf "${RED}          \`\"Y\$b._\n"
-   printf "${RED}              \`\"\"\"\n${NC}"
+   printf "${RED}              \`\"\"\"\n${NC}" || \
+   return 1
 }
 
 set_locale ()
