@@ -54,7 +54,7 @@ install_packages ()
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
    echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && \
    curl -s https://dl.xanmod.org/gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/xanmod.gpg --import && \
-   chown _apt /etc/apt/trusted.gpg.d/xanmod.gpg && \
+   chmod 644 /etc/apt/trusted.gpg.d/xanmod.gpg && \
    arch-chroot /mnt apt update && \
    arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
    arch-chroot /mnt apt purge -y nano vim-common && \
