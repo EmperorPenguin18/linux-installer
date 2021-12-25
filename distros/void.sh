@@ -103,10 +103,10 @@ set_initramfs ()
       sed -i "s|2788eb78-074d-4424-9f1d-ebffc9c37262|$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3)|g" /mnt/etc/openswap.conf && \
       sed -i 's|etc/keyfile-cryptswap|etc/keys/keyfile.bin|g' /mnt/etc/openswap.conf && \
       sed -i 's|#keyfile_device_mount_options="--options=subvol=__active/__"|keyfile_device_mount_options="--options=subvol=_active/rootvol"|g' /mnt/etc/openswap.conf && \
-      echo "HOOKS=(base udev encrypt openswap autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf || \
+      echo "HOOKS=(base udev encrypt openswap autodetect modconf block filesystems keyboard resume fsck)" >> /mnt/etc/mkinitcpio.conf || \
       return 1
    else
-      echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard fsck)" >> /mnt/etc/mkinitcpio.conf || \
+      echo "HOOKS=(base udev encrypt autodetect modconf block filesystems keyboard resume fsck)" >> /mnt/etc/mkinitcpio.conf || \
       return 1
    fi
    arch-chroot /mnt mkinitcpio -c /etc/mkinitcpio.conf -g /boot/initramfs-$(ls /mnt/usr/lib/modules).img -k $(ls /mnt/usr/lib/modules) && \
