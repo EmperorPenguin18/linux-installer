@@ -11,7 +11,7 @@ user_prompts ()
    TEMP=$(dialog --stdout \
       --msgbox "Welcome to linux-installer! Please answer the following questions to begin." 0 0 \
       --and-widget --clear --radiolist "Choose disk to install to." 0 0 $(wc -l < disks.txt) --file disks.txt \
-      --and-widget --clear --radiolist "What distro do you want to install?" 0 0 0 arch "" on debian "" off fedora "" off void "" off \
+      --and-widget --clear --radiolist "What distro do you want to install?" 0 0 0 arch "" on debian "" off fedora "" off opensuse "" off void "" off \
       --and-widget --clear --radiolist "Choose a timezone." 0 0 $(wc -l < zones.txt) --file zones.txt \
       --and-widget --clear --inputbox "What will the hostname of this computer be?" 0 0 \
       --and-widget --clear --inputbox "Enter your username." 0 0 \
