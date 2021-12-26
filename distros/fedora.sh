@@ -47,21 +47,10 @@ install_packages ()
    else
       GRUB="grub2-pc"
    fi
-   if [ "$(df | grep /run/archiso/cowspace | wc -l)" -gt 0 ]; then mount -o remount,size=2G /run/archiso/cowspace || return 1; fi
    NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
-   IMAGE=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Cloud/x86_64/images/ | cut -d '"' -f 2 | grep raw.xz) && \
-   wget -O - https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Cloud/x86_64/images/$IMAGE | xzcat >fedora.img && \
-   DEVICE=$(losetup --show -fP fedora.img) && \
-   mkdir -p /loop && \
-   mount $(echo $DEVICE)p1 /loop && \
-   mkdir /media && \
-   cp -ax /loop /media && \
-   umount /loop && \
-   losetup -d $DEVICE && \
-   rm fedora.img && \
-   mount -o bind /mnt /media/loop/mnt && \
+   pacman -S dnf --noconfirm && \
+   dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager && \
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
-   arch-chroot /media/loop dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager && \
    set_locale && \
    arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel os-prober $GRUB passwd linux-firmware btrfs-progs dosfstools $CPU microcode_ctl git $VIRTUAL cryptsetup-luks sudo fish || \
    return 1
@@ -102,7 +91,5 @@ create_bootloader ()
 
 distro_clean ()
 {
-   umount /media/loop/mnt && \
-   rm -r /media/loop || \
-   return 1
+   return 0
 }
