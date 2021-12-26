@@ -50,7 +50,7 @@ install_packages ()
    NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
    RPM=$(curl -s "https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Everything/x86_64/os/Packages/p/" | grep -E "\"python3-libcomps-[0-9]" | grep -v 'i686' | cut -d '"' -f 2) && \
    wget -q https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Everything/x86_64/os/Packages/p/$RPM && \
-   pacman -Syu dnf --noconfirm && \
+   pacman -S dnf --noconfirm --needed && \
    rpm -i $RPM --nodeps && \
    rm $RPM && \
    mkdir /etc/yum.repos.d && \
