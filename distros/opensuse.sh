@@ -29,9 +29,36 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^..;kKKK0.  ${WHITE}dKd
   return 1
 }
 
-install_packages ()
+install_git ()
 {
-  return 0
+    PWD=$(pwd) && \
+    mkdir /mnt/home/build && \
+    chgrp nobody /mnt/home/build && \
+    chmod g+ws /mnt/home/build && \
+    setfacl -m u::rwx,g::rwx /mnt/home/build && \
+    setfacl -d --set u::rwx,g::rwx,o::- /mnt/home/build && \
+    cd /mnt/home/build || \
+    return 1
+    for I in $@
+    do
+        git clone https://aur.archlinux.org/$I.git newgitpackage && \
+        cd newgitpackage && \
+        sudo -u nobody makepkg --noconfirm && \
+        pacman -U *.pkg* --noconfirm --needed && \
+        cd ../ && \
+        rm -r newgitpackage || \
+        return 1
+    done
+    cd $PWD
+    return 0
+}
+
+install_packages () #remove makedepends to save space
+{
+  pacman -S git fakeroot binutils meson ninja rpm-tools cmake ruby swig boost libsigc++ yaml-cpp asciidoc asciidoctor dejagnu doxygen graphviz protobuf augeas --noconfirm --needed --asdeps && \
+  install_git zchunk libsolv libzypp zypper && \
+  zypper --root /mnt in vi || \
+  return 1
 }
 
 create_user ()
