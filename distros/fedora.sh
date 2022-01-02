@@ -48,15 +48,9 @@ install_packages ()
       GRUB="grub2-pc"
    fi
    NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
-   RPM=$(curl -s "https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Everything/x86_64/os/Packages/p/" | grep -E "\"python3-libcomps-[0-9]" | grep -v 'i686' | cut -d '"' -f 2) && \
-   wget -q https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/$NUM/Everything/x86_64/os/Packages/p/$RPM && \
-   pacman -S dnf --noconfirm --needed && \
-   rpm -i $RPM --nodeps && \
-   rm $RPM && \
    mkdir /etc/yum.repos.d && \
    printf '[fedora]\nname=Fedora $releasever - $basearch\n#baseurl=http://download.example/pub/fedora/linux/releases/$releasver/Everything/$basearch/os\nmetalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch\nenabled=1\ncountme=1\nmetadata_expire=7d\nrepo_gpgcheck=0\ntype=rpm\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch\nskip_if_unavailable=False' > /etc/yum.repos.d/fedora.repo && \
    dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True basesystem dnf glibc-langpack-en glibc-locale-source iputils NetworkManager && \
-   rpm -e python3-libcomps && \
    sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
    set_locale && \
    arch-chroot /mnt dnf install -y --setopt=install_weak_deps=False --setopt=keepcache=True kernel os-prober $GRUB passwd linux-firmware btrfs-progs dosfstools $CPU microcode_ctl git $VIRTUAL cryptsetup-luks sudo fish || \
