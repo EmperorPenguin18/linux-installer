@@ -81,15 +81,13 @@ create_bootloader ()
    return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
       #arch-chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
-      arch-chroot /mnt dnf reinstall grub2* shim* && \
-      arch-chroot /mnt grub2-mkconfig -o /boot/EFI/fedora/grub.cfg && \
-      ln -s /boot/EFI/fedora/grub.cfg /mnt/etc/grub2-efi.cfg || \
+      arch-chroot /mnt dnf reinstall -y grub2* shim* || \
       return 1
    else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME && \
-      arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg || \
+      arch-chroot /mnt grub2-install /dev/$DISKNAME || \
       return 1
    fi
+   arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg && \
    arch-chroot /mnt dracut --force --regenerate-all || \
    return 1
 }
