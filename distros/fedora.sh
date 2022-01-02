@@ -43,7 +43,7 @@ install_packages ()
       VIRTUAL=""
    fi
    if [ "${BOOTTYPE}" = "efi" ]; then
-      GRUB="grub2-efi-x64 efibootmgr"
+      GRUB="grub2-efi-x64 grub2-efi-x64-modules shim-x64 efibootmgr"
    else
       GRUB="grub2-pc"
    fi
@@ -80,13 +80,16 @@ create_bootloader ()
    echo "GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:/etc/keys/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=/dev/mapper/cryptswap root=UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot) rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub || \
    return 1
    if [ "${BOOTTYPE}" = "efi" ]; then
-      arch-chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
+      #arch-chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
+      arch-chroot /mnt dnf reinstall grub2* shim* && \
+      arch-chroot /mnt grub2-mkconfig -o /boot/EFI/fedora/grub.cfg && \
+      ln -s /boot/EFI/fedora/grub.cfg /mnt/etc/grub2-efi.cfg || \
       return 1
    else
-      arch-chroot /mnt grub2-install /dev/$DISKNAME || \
+      arch-chroot /mnt grub2-install /dev/$DISKNAME && \
+      arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg || \
       return 1
    fi
-   arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg && \
    arch-chroot /mnt dracut --force --regenerate-all || \
    return 1
 }
