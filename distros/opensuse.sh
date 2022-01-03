@@ -31,14 +31,17 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^..;kKKK0.  ${WHITE}dKd
 
 install_git ()
 {
-    PWD=$(pwd) && \
-    mkdir /mnt/home/build && \
-    chgrp nobody /mnt/home/build && \
-    chmod g+ws /mnt/home/build && \
-    setfacl -m u::rwx,g::rwx /mnt/home/build && \
-    setfacl -d --set u::rwx,g::rwx,o::- /mnt/home/build && \
-    cd /mnt/home/build || \
-    return 1
+    PWD=$(pwd)
+    if [ -d "/mnt/home/build" ]
+    then
+      mkdir /mnt/home/build && \
+      chgrp nobody /mnt/home/build && \
+      chmod g+ws /mnt/home/build && \
+      setfacl -m u::rwx,g::rwx /mnt/home/build && \
+      setfacl -d --set u::rwx,g::rwx,o::- /mnt/home/build || \
+      return 1
+    fi
+    cd /mnt/home/build
     for I in $@
     do
         git clone https://aur.archlinux.org/$I.git newgitpackage && \
@@ -53,12 +56,26 @@ install_git ()
     return 0
 }
 
-install_packages () #remove makedepends to save space
+install_packages ()
 {
-  pacman -S git fakeroot binutils meson ninja rpm-tools cmake ruby swig boost libsigc++ yaml-cpp asciidoc asciidoctor dejagnu doxygen graphviz protobuf augeas --noconfirm --needed --asdeps && \
-  install_git zchunk libsolv libzypp zypper && \
+  pacman -S git fakeroot binutils meson ninja --noconfirm --needed --asdeps && \
+  install_git zchunk && \
+  pacman -R meson ninja --noconfirm && \
+  pacman -S rpm-tools cmake ruby swig --noconfirm --needed --asdeps && \
+  install_git libsolv && \
+  pacman -R ruby swig --noconfirm && \
+  pacman -S libsigc++ yaml-cpp asciidoc boost dejagnu doxygen graphviz ninja protobuf --noconfirm --needed --asdeps && \
+  install_git libzypp && \
+  pacman -R dejagnu doxygen graphviz protobuf --noconfirm && \
+  pacman -S augeas asciidoctor --noconfirm --needed --asdeps && \
+  install_git zypper && \
   zypper --root /mnt in vi || \
   return 1
+}
+
+set_locale ()
+{
+  return 0
 }
 
 create_user ()
