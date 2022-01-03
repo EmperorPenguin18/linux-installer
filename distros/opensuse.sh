@@ -13,11 +13,11 @@ print_logo ()
      .d00l'                'o00d.
    .d0Kd'  ${GREEN}Okxol:;,.          ${WHITE}:O0d.
   .OK${GREEN}KKK0kOKKKKKKKKKKOxo:,      ${WHITE}lKO.
- ,0K${GREEN}KKKKKKKKKKKKKKK0P^${WHITE},,,^dx:    ${WHITE};00,
-.OK${GREEN}KKKKKKKKKKKKKKKk'${WHITE}.oOPPb.'0k.   ${WHITE}cKO.
-:KK${GREEN}KKKKKKKKKKKKKKK: ${WHITE}kKx..dd lKd   ${WHITE}'OK:
-dKK${GREEN}KKKKKKKKKOx0KKKd ${WHITE}^0KKKO' kKKc   ${WHITE}dKd
-dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^..;kKKK0.  ${WHITE}dKd
+ ,0K${GREEN}KKKKKKKKKKKKKKK0P^${WHITE},,,${GREEN}^dx:    ${WHITE};00,
+.OK${GREEN}KKKKKKKKKKKKKKKk'${WHITE}.oOPPb.${GREEN}'0k.   ${WHITE}cKO.
+:KK${GREEN}KKKKKKKKKKKKKKK: ${WHITE}kKx..dd ${GREEN}lKd   ${WHITE}'OK:
+dKK${GREEN}KKKKKKKKKOx0KKKd ${WHITE}^0KKKO' ${GREEN}kKKc   ${WHITE}dKd
+dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^${GREEN}..;kKKK0.  ${WHITE}dKd
 :KK${GREEN}KKKKKKKKKK0o;...^cdxxOK0O/^^'  ${WHITE}.0K:
  kKK${GREEN}KKKKKKKKKKKKK0x;,,......,;od  ${WHITE}lKk
  '0K${GREEN}KKKKKKKKKKKKKKKKKKKK00KKOo^  ${WHITE}c00'
@@ -32,7 +32,7 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^..;kKKK0.  ${WHITE}dKd
 install_git ()
 {
     PWD=$(pwd)
-    if [ -d "/mnt/home/build" ]
+    if [ ! -d "/mnt/home/build" ]
     then
       mkdir /mnt/home/build && \
       chgrp nobody /mnt/home/build && \
