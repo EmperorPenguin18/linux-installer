@@ -29,23 +29,26 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^${GREEN}..;kKKK0.  ${WHITE}dKd
   return 1
 }
 
+install_rpm ()
+{
+  URL="https://mirror.csclub.uwaterloo.ca/opensuse/distribution/openSUSE-current/repo/oss/x86_64/" && \
+  PKGS="$(curl -s "$URL" | cut -d '"' -f 2)" || \
+  return 1
+  for I in $@
+  do
+    FILE="$(echo "$PKGS" | grep -E "$I-[0-9]")"
+    wget -qO "$FILE" "$URL$FILE" && \
+    rpm -i $FILE --nodeps && \
+    rm $FILE || \
+    return 1
+  done
+  return 0
+}
+
 install_packages ()
 {
   pacman -S rpm-tools libsigc++ yaml-cpp augeas --noconfirm --needed --asdeps && \
-  URL="https://mirror.csclub.uwaterloo.ca/opensuse/distribution/openSUSE-current/repo/oss/x86_64/" && \
-  PKGS="$(curl -s "$URL" | cut -d '"' -f 2)" && \
-  wget -q "$URL$(echo "$PKGS" | grep -E "zchunk-[0-9]")" && \
-  rpm -i zchunk* --nodeps && \
-  rm zchunk* && \
-  wget -q "$URL$(echo "$PKGS" | grep -E "libsolv-tools-[0-9]")" && \
-  rpm -i libsolv* --nodeps && \
-  rm libsolv* && \
-  wget -q "$URL$(echo "$PKGS" | grep -E "libzypp-[0-9]")" && \
-  rpm -i libzypp* --nodeps && \
-  rm libzypp* && \
-  wget -q "$URL$(echo "$PKGS" | grep -E "zypper-[0-9]")" && \
-  rpm -i zypper* --nodeps && \
-  rm zypper* && \
+  install_rpm libsolv-tools libzypp libreadline7-7.0 zypper && \
   zypper --root /mnt in vi || \
   return 1
 }
