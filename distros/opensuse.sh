@@ -29,46 +29,23 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^${GREEN}..;kKKK0.  ${WHITE}dKd
   return 1
 }
 
-install_git ()
-{
-    PWD=$(pwd)
-    if [ ! -d "/mnt/home/build" ]
-    then
-      mkdir /mnt/home/build && \
-      chgrp nobody /mnt/home/build && \
-      chmod g+ws /mnt/home/build && \
-      setfacl -m u::rwx,g::rwx /mnt/home/build && \
-      setfacl -d --set u::rwx,g::rwx,o::- /mnt/home/build || \
-      return 1
-    fi
-    cd /mnt/home/build
-    for I in $@
-    do
-        git clone https://aur.archlinux.org/$I.git newgitpackage && \
-        cd newgitpackage && \
-        sudo -u nobody makepkg --noconfirm && \
-        pacman -U *.pkg* --noconfirm --needed && \
-        cd ../ && \
-        rm -r newgitpackage || \
-        return 1
-    done
-    cd $PWD
-    return 0
-}
-
 install_packages ()
 {
-  pacman -S git fakeroot binutils meson ninja --noconfirm --needed --asdeps && \
-  install_git zchunk && \
-  pacman -R meson ninja --noconfirm && \
-  pacman -S rpm-tools cmake ruby swig --noconfirm --needed --asdeps && \
-  install_git libsolv && \
-  pacman -R ruby swig --noconfirm && \
-  pacman -S libsigc++ yaml-cpp asciidoc boost dejagnu doxygen graphviz ninja protobuf --noconfirm --needed --asdeps && \
-  install_git libzypp && \
-  pacman -R dejagnu doxygen graphviz protobuf --noconfirm && \
-  pacman -S augeas asciidoctor --noconfirm --needed --asdeps && \
-  install_git zypper && \
+  pacman -S rpm-tools libsigc++ yaml-cpp augeas --noconfirm --needed --asdeps && \
+  URL="https://mirror.csclub.uwaterloo.ca/opensuse/distribution/openSUSE-current/repo/oss/x86_64/" && \
+  PKGS="$(curl -s "$URL" | cut -d '"' -f 2)" && \
+  wget -q "$URL$(echo "$PKGS" | grep -E "zchunk-[0-9]")" && \
+  rpm -i zchunk* --nodeps && \
+  rm zchunk* && \
+  wget -q "$URL$(echo "$PKGS" | grep -E "libsolv-tools-[0-9]")" && \
+  rpm -i libsolv* --nodeps && \
+  rm libsolv* && \
+  wget -q "$URL$(echo "$PKGS" | grep -E "libzypp-[0-9]")" && \
+  rpm -i libzypp* --nodeps && \
+  rm libzypp* && \
+  wget -q "$URL$(echo "$PKGS" | grep -E "zypper-[0-9]")" && \
+  rpm -i zypper* --nodeps && \
+  rm zypper* && \
   zypper --root /mnt in vi || \
   return 1
 }
