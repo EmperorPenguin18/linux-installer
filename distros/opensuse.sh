@@ -29,27 +29,14 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^${GREEN}..;kKKK0.  ${WHITE}dKd
   return 1
 }
 
-install_rpm ()
-{
-  URL="https://mirror.csclub.uwaterloo.ca/opensuse/distribution/openSUSE-current/repo/oss/x86_64/" && \
-  PKGS="$(curl -s "$URL" | cut -d '"' -f 2)" || \
-  return 1
-  for I in $@
-  do
-    FILE="$(echo "$PKGS" | grep -E "$I-[0-9]")"
-    wget -qO "$FILE" "$URL$FILE" && \
-    rpm -i $FILE --nodeps && \
-    rm $FILE || \
-    return 1
-  done
-  return 0
-}
-
 install_packages ()
 {
-  pacman -S rpm-tools libsigc++ yaml-cpp augeas --noconfirm --needed --asdeps && \
-  install_rpm libsolv-tools libzypp libreadline7-7.0 zypper && \
-  zypper --root /mnt in vi || \
+  NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
+  pacman -S dnf --noconfirm --needed && \
+  mkdir /etc/yum.repos.d && \
+  printf '[fedora]\nname=Fedora $releasever - $basearch\n#baseurl=http://download.example/pub/fedora/linux/releases/$releasver/Everything/$basearch/os\nmetalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch\nenabled=1\ncountme=1\nmetadata_expire=7d\nrepo_gpgcheck=0\ntype=rpm\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch\nskip_if_unavailable=False' > /etc/yum.repos.d/fedora.repo && \
+  dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck zypper && \
+  arch-chroot /mnt zypper in vi || \
   return 1
 }
 
