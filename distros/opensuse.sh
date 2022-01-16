@@ -63,13 +63,13 @@ install_packages ()
 
 set_locale ()
 {
+  sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
   arch-chroot /mnt zypper -n aloc en_US || \
   return 1
 }
 
 create_user ()
 {
-  sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
   arch-chroot /mnt useradd -m -s /bin/fish -G wheel $USER && \
   echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers && \
   echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers || \
