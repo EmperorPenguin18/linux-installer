@@ -57,7 +57,7 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
-  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils busybox-adduser glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
   return 1
 }
 
@@ -70,7 +70,7 @@ set_locale ()
 
 create_user ()
 {
-  arch-chroot /mnt useradd -m -s /bin/fish -G wheel $USER && \
+  printf "$PASS\n$PASS\n" | arch-chroot /mnt adduser -s /bin/fish -G wheel $USER && \
   echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers && \
   echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers || \
   return 1
