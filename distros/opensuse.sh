@@ -33,21 +33,21 @@ install_packages ()
 {
   VIRTUAL=$(dmidecode -s system-product-name)
   if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
-     CPU="intel iucode-tool"
+    CPU="intel iucode-tool"
   else
-     CPU="amd"
+    CPU="amd"
   fi
   if [ "${VIRTUAL}" = "VirtualBox" ]; then
-     VIRTUAL="virtualbox-guest-x11 virtualbox-guest-tools"
+    VIRTUAL="virtualbox-guest-x11 virtualbox-guest-tools"
   elif [ "${VIRTUAL}" = "KVM" ]; then
-     VIRTUAL="qemu-guest-agent"
+    VIRTUAL="qemu-guest-agent"
   else
-     VIRTUAL=""
+    VIRTUAL=""
   fi
   if [ "${BOOTTYPE}" = "efi" ]; then
-     GRUB="grub2-x86_64-efi efibootmgr"
+    GRUB="grub2-x86_64-efi efibootmgr"
   else
-     GRUB="grub2"
+    GRUB="grub2"
   fi
   NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
   pacman -S dnf --noconfirm --needed && \
@@ -57,28 +57,48 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
-  arch-chroot /mnt zypper -n --gpg-auto-import-keys in --replacefiles patterns-base-basesystem kernel-default glibc-locale-base $GRUB os-prober ucode-$CPU btrfsprogs dosfstools sudo NetworkManager fish $VIRTUAL || \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools sudo NetworkManager fish $VIRTUAL || \
   return 1
 }
 
 set_locale ()
 {
-  return 0
+  arch-chroot /mnt zypper -n aloc en_US || \
+  return 1
 }
 
 create_user ()
 {
-  return 0
+  sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
+  arch-chroot /mnt useradd -m -s /bin/fish -G wheel $USER && \
+  echo "root ALL=(ALL) ALL" > /mnt/etc/sudoers && \
+  echo "%wheel ALL=(ALL) ALL" >> /mnt/etc/sudoers || \
+  return 1
 }
 
 set_initramfs ()
 {
-  return 0
+  echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$ROOTNAME) /etc/keys/keyfile.bin luks,discard,key-slot=1" > /mnt/etc/crypttab
+  [ "${SWAP}" != "n" ] && echo "cryptswap UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3) /etc/keys/keyfile.bin luks,swap,key-slot=1" >> /mnt/etc/crypttab
+  echo 'install_items+=" /etc/keys/keyfile.bin /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf || \
+  return 1
 }
 
 create_bootloader ()
 {
-  return 0
+  echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub && \
+  echo "GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:/etc/keys/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=/dev/mapper/cryptswap root=UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot) rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub || \
+  return 1
+  if [ "${BOOTTYPE}" = "efi" ]; then
+    arch-chroot /mnt grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck || \
+    return 1
+  else
+    arch-chroot /mnt grub2-install /dev/$DISKNAME || \
+    return 1
+  fi
+  arch-chroot /mnt grub2-mkconfig -o /boot/grub2/grub.cfg && \
+  arch-chroot /mnt dracut --force --regenerate-all || \
+  return 1
 }
 
 distro_clean ()
