@@ -49,16 +49,19 @@ install_packages ()
   else
     GRUB="grub2"
   fi
+  [ -f /etc/yum.repos.d/fedora.repo ] && mv /etc/yum.repos.d/fedora.repo /etc/yum.repos.d/fedora.repo.bak
   NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
   pacman -S dnf --noconfirm --needed && \
-  mkdir /etc/yum.repos.d && \
+  mkdir -p /etc/yum.repos.d && \
   printf '[fedora]\nname=Fedora $releasever - $basearch\n#baseurl=http://download.example/pub/fedora/linux/releases/$releasver/Everything/$basearch/os\nmetalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch\nenabled=1\ncountme=1\nmetadata_expire=7d\nrepo_gpgcheck=0\ntype=rpm\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch\nskip_if_unavailable=False' > /etc/yum.repos.d/fedora.repo && \
   dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck zypper && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
-  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils gawk kernel-default busybox-adduser glibc-locale zypper $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
+  arch-chroot /mnt rpm -e zypp-tools --nodeps && \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils gawk kernel-default busybox-adduser glibc-locale libzypp zypper $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
   return 1
+  [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
 }
 
 set_locale ()
