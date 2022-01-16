@@ -57,7 +57,7 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
-  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils busybox-adduser glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils gawk kernel-default busybox-adduser glibc-locale zypper $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
   return 1
 }
 
@@ -86,6 +86,7 @@ set_initramfs ()
 
 create_bootloader ()
 {
+  echo "SUSE_BTRFS_SNAPSHOT_BOOTING=true" >> /mnt/etc/default/grub && \
   echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub && \
   echo "GRUB_CMDLINE_LINUX=\"cryptkey=rootfs:/etc/keys/keyfile.bin cryptdevice=UUID=$(blkid -s UUID -o value /dev/$ROOTNAME):cryptroot resume=/dev/mapper/cryptswap root=UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot) rootflags=subvol=/_active/rootvol rw\"" >> /mnt/etc/default/grub || \
   return 1
