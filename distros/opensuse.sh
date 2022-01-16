@@ -57,7 +57,7 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
-  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools sudo NetworkManager fish $VIRTUAL || \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles filesystem coreutils glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
   return 1
 }
 
