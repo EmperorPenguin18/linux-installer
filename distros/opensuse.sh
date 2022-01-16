@@ -31,12 +31,33 @@ dKK${GREEN}KKKKKKKKKK;.;oOKx,..${WHITE}^${GREEN}..;kKKK0.  ${WHITE}dKd
 
 install_packages ()
 {
+  VIRTUAL=$(dmidecode -s system-product-name)
+  if [ "$(cat /proc/cpuinfo | grep name | grep Intel | wc -l)" -gt 0 ]; then
+     CPU="intel iucode-tool"
+  else
+     CPU="amd"
+  fi
+  if [ "${VIRTUAL}" = "VirtualBox" ]; then
+     VIRTUAL="virtualbox-guest-x11 virtualbox-guest-tools"
+  elif [ "${VIRTUAL}" = "KVM" ]; then
+     VIRTUAL="qemu-guest-agent"
+  else
+     VIRTUAL=""
+  fi
+  if [ "${BOOTTYPE}" = "efi" ]; then
+     GRUB="grub2-x86_64-efi efibootmgr"
+  else
+     GRUB="grub2"
+  fi
   NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
   pacman -S dnf --noconfirm --needed && \
   mkdir /etc/yum.repos.d && \
   printf '[fedora]\nname=Fedora $releasever - $basearch\n#baseurl=http://download.example/pub/fedora/linux/releases/$releasver/Everything/$basearch/os\nmetalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch\nenabled=1\ncountme=1\nmetadata_expire=7d\nrepo_gpgcheck=0\ntype=rpm\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch\nskip_if_unavailable=False' > /etc/yum.repos.d/fedora.repo && \
   dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck zypper && \
-  arch-chroot /mnt zypper in vi || \
+  arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/oss/ oss && \
+  arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
+  arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
+  arch-chroot /mnt zypper -n --gpg-auto-import-keys in --replacefiles patterns-base-basesystem kernel-default glibc-locale-base $GRUB os-prober ucode-$CPU btrfsprogs dosfstools sudo NetworkManager fish $VIRTUAL || \
   return 1
 }
 
