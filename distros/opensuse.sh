@@ -60,6 +60,7 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
   arch-chroot /mnt zypper -n ar -f https://download.opensuse.org/repositories/openSUSE:Factory/standard/ factory && \
   arch-chroot /mnt rpm -e zypp-tools --nodeps && \
+  exit 0 #debug
   arch-chroot /mnt zypper -n --gpg-auto-import-keys in -f --replacefiles --force-resolution filesystem coreutils gawk kernel-default busybox-adduser glibc-locale rpm-config-SUSE rpm libsolv-tools libzypp zypper $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL || \
   return 1
   [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
