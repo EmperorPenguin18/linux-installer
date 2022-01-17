@@ -72,9 +72,6 @@ expect "filler2"
 send -- "3\r"
 expect "filler3"
 send -- "\r"
-set timeout 100
-expect "filler4"
-send -- "r\r"
 expect eof' > script.exp && \
   chmod +x script.exp && \
   ./script.exp && \
