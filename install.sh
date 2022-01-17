@@ -24,6 +24,8 @@ pre_checks ()
    pacman -Sy >/dev/null 2>&1
    pacman -Q | awk '{print $1}' > pre.txt
    pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
+   export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+   set -x
 }
 
 setup_partitions ()
