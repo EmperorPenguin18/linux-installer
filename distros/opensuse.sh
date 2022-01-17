@@ -51,7 +51,7 @@ install_packages ()
   fi
   [ -f /etc/yum.repos.d/fedora.repo ] && mv /etc/yum.repos.d/fedora.repo /etc/yum.repos.d/fedora.repo.bak
   NUM=$(curl -sL https://mirror.csclub.uwaterloo.ca/pub/fedora/linux/releases/ | cut -d '>' -f 2 | cut -d '/' -f 1 | sed '1,4d' | head -n -3 | sort -g | tail -1) && \
-  pacman -S dnf --noconfirm --needed && \
+  pacman -S dnf expect --noconfirm --needed && \
   mkdir -p /etc/yum.repos.d && \
   printf '[fedora]\nname=Fedora $releasever - $basearch\n#baseurl=http://download.example/pub/fedora/linux/releases/$releasver/Everything/$basearch/os\nmetalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch\nenabled=1\ncountme=1\nmetadata_expire=7d\nrepo_gpgcheck=0\ntype=rpm\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch\nskip_if_unavailable=False' > /etc/yum.repos.d/fedora.repo && \
   dnf install -y --installroot=/mnt --releasever=$NUM --setopt=install_weak_deps=False --setopt=keepcache=True --nogpgcheck zypper && \
@@ -59,13 +59,19 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/tumbleweed/repo/non-oss/ non-oss && \
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
   arch-chroot /mnt zypper -n --gpg-auto-import-keys in --replacefiles --allow-vendor-change filesystem coreutils gawk kernel-default busybox-adduser glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL && \
-  arch-chroot /mnt zypper -n ar -f https://download.opensuse.org/repositories/openSUSE:Factory/standard/ factory || \
-  return 1
-  arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper << EOF
-3
-3
-
-EOF
+  arch-chroot /mnt zypper -n ar -f https://download.opensuse.org/repositories/openSUSE:Factory/standard/ factory && \
+  echo '#!/bin/sh' > temp.sh && \
+  echo 'arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper' >> temp.sh && \
+  expect -f 'spawn ./temp.sh
+expect "Choose from above solutions by number or skip, retry or cancel [1/2/3/s/r/c/d/?] (c): "
+send "3\r"
+expect "Choose from above solutions by number or skip, retry or cancel [1/2/3/s/r/c/d/?] (c): "
+send "3\r"
+expect "Continue? [y/n/v/...? shows all options] (y): "
+send "\r"
+expect eof
+' && \
+  rm temp.sh && \
   arch-chroot /mnt zypper -n rr factory || \
   return 1
   [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
