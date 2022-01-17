@@ -60,7 +60,7 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
   arch-chroot /mnt zypper -n --gpg-auto-import-keys in --replacefiles --allow-vendor-change filesystem coreutils gawk kernel-default busybox-adduser glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL && \
   printf '#!/bin/sh
-arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper > /dev/null' > temp.sh && \
+arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper > log.txt' > temp.sh && \
   chmod +x temp.sh && \
   printf '#!/bin/expect -f
 set timeout 25
@@ -74,7 +74,7 @@ send -- "\r"
 expect eof' > script.exp && \
   chmod +x script.exp && \
   ./script.exp && \
-  rm temp.sh script.exp && \
+  rm temp.sh script.exp log.txt && \
   return 1
   [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
   return 0
