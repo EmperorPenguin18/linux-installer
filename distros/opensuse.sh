@@ -76,7 +76,7 @@ expect eof' > script.exp && \
   chmod +x script.exp && \
   ./script.exp && \
   rm temp.sh script.exp && \
-  umount /mnt/dev && \
+  umount -R /mnt/dev && \
   arch-chroot /mnt zypper -n rr factory || \
   return 1
   [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
