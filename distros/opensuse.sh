@@ -62,15 +62,16 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f https://download.opensuse.org/repositories/openSUSE:Factory/standard/ factory && \
   echo '#!/bin/sh' > temp.sh && \
   echo 'arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper' >> temp.sh && \
-  expect -f 'spawn ./temp.sh
-expect "Choose from above solutions by number or skip, retry or cancel [1/2/3/s/r/c/d/?] (c): "
-send "3\r"
-expect "Choose from above solutions by number or skip, retry or cancel [1/2/3/s/r/c/d/?] (c): "
-send "3\r"
-expect "Continue? [y/n/v/...? shows all options] (y): "
-send "\r"
-expect eof
-' && \
+  chmod +x temp.sh && \
+  expect -f 'set timeout -1
+spawn ./temp.sh
+expect ".*Choose from above solutions by number or skip, retry or cancel \[1/2/3/s/r/c/d/?\] (c): "
+send -- "3\r"
+expect ".*Choose from above solutions by number or skip, retry or cancel \[1/2/3/s/r/c/d/?\] (c): "
+send -- "3\r"
+expect ".*Continue? \[y/n/v/...? shows all options\] (y): "
+send -- "\r"
+expect eof' && \
   rm temp.sh && \
   arch-chroot /mnt zypper -n rr factory || \
   return 1
