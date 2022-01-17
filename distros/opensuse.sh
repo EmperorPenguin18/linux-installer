@@ -63,7 +63,8 @@ install_packages ()
   printf '#!/bin/sh
 arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper > /dev/null' > temp.sh && \
   chmod +x temp.sh && \
-  printf 'set timeout 50
+  printf '#!/bin/expect -f
+set timeout 50
 spawn ./temp.sh
 expect "filler"
 send -- "3\r"
