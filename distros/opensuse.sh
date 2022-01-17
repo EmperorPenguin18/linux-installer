@@ -63,7 +63,7 @@ install_packages ()
   echo '#!/bin/sh' > temp.sh && \
   echo 'arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper' >> temp.sh && \
   chmod +x temp.sh && \
-  expect -f 'set timeout -1
+  expect 'set timeout -1
 spawn ./temp.sh
 expect ".*Choose from above solutions by number or skip, retry or cancel \[1/2/3/s/r/c/d/?\] (c): "
 send -- "3\r"
