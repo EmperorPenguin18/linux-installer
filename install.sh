@@ -1,3 +1,6 @@
+#linux-installer by Sebastien MacDougall-Landry
+#License is available at
+#https://github.com/EmperorPenguin18/linux-installer/blob/main/LICENSE
 #!/bin/sh
 
 pre_checks ()
@@ -21,43 +24,8 @@ pre_checks ()
    pacman -Sy >/dev/null 2>&1
    pacman -Q | awk '{print $1}' > pre.txt
    pacman -S dmidecode parted dosfstools util-linux reflector arch-install-scripts efibootmgr dialog wget cryptsetup bc --noconfirm --needed >/dev/null 2>&1 
-}
-
-user_prompts ()
-{
-   mv /usr/share/zoneinfo/right /usr/share/right
-   mv /usr/share/zoneinfo/posix /usr/share/posix
-   lsblk | awk '/disk/ {print $1 " " $4 " off"}' > disks.txt
-   find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sed -e 's/$/ "" off/' > zones.txt
-   TEMP=$(dialog --stdout \
-      --msgbox "Welcome to linux-installer! Please answer the following questions to begin." 0 0 \
-      --and-widget --clear --radiolist "Choose disk to install to." 0 0 $(wc -l < disks.txt) --file disks.txt \
-      --and-widget --clear --radiolist "What distro do you want to install?" 0 0 0 arch "" on debian "" off fedora "" off void "" off \
-      --and-widget --clear --radiolist "Choose a timezone." 0 0 $(wc -l < zones.txt) --file zones.txt \
-      --and-widget --clear --inputbox "What will the hostname of this computer be?" 0 0 \
-      --and-widget --clear --inputbox "Enter your username." 0 0 \
-      --and-widget --clear --passwordbox "Enter your password." 0 0 \
-      --and-widget --clear --passwordbox "Confirm password." 0 0 \
-   )
-   rm disks.txt zones.txt
-   if [ "$(echo $TEMP | awk '{print $6}')" != "$(echo $TEMP | awk '{print $7}')" ]; then echo "Passwords do not match"; exit 1; fi
-   DISKNAME=$(echo $TEMP | awk '{print $1}')
-   DISTRO=$(echo $TEMP | awk '{print $2}')
-   TIME=$(echo $TEMP | awk '{print $3}')
-   HOST=$(echo $TEMP | awk '{print $4}')
-   USER=$(echo $TEMP | awk '{print $5}')
-   PASS=$(echo $TEMP | awk '{print $6}')
-   if dialog --yesno "Do you want hibernation enabled (Swap partition)" 0 0; then
-      SWAP=y
-   else
-      SWAP=n
-   fi
-   if dialog --default-button "no" --yesno "This will delete all data on selected storage device. Are you sure you want to continue?" 0 0; then
-      SURE=y
-   else
-      exit 1
-   fi
-   clear
+   export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+   set -x
 }
 
 setup_partitions ()
@@ -79,6 +47,7 @@ setup_partitions ()
    else
       DISKNAME2=$(echo $DISKNAME)p
    fi
+   ROOTNAME=$(echo $DISKNAME2)2
 }
 
 partition_drive ()
@@ -118,8 +87,10 @@ partition_drive ()
 
 encrypt_partitions ()
 {
-   echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$(echo $DISKNAME2)2 && \
-   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)2 cryptroot || \
+   echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$ROOTNAME && \
+   echo "$PASS" | cryptsetup -q luksFormat --type luks1 /dev/$(echo $DISKNAME2)3 &&\
+   echo "$PASS" | cryptsetup open /dev/$ROOTNAME cryptroot && \
+   echo "$PASS" | cryptsetup open /dev/$(echo $DISKNAME2)3 cryptswap || \
    return 1
 }
 
@@ -130,8 +101,8 @@ format_partitions ()
    mount /dev/mapper/cryptroot /mnt || \
    return 1
    if [ "${SWAP}" != "n" ]; then
-      mkswap /dev/$(echo $DISKNAME2)3 && \
-      swapon /dev/$(echo $DISKNAME2)3 || \
+      mkswap /dev/mapper/cryptswap && \
+      swapon /dev/mapper/cryptswap || \
       return 1
    fi
 }
@@ -163,24 +134,40 @@ generate_fstab ()
    echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)1) /boot   vfat  rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro   0  2 > /mnt/etc/fstab && \
    UUID2=$(blkid -s UUID -o value /dev/mapper/cryptroot) || \
    return 1
-   if [ "${SWAP}" != "n" ]; then echo UUID=$(blkid -s UUID -o value /dev/$(echo $DISKNAME2)3) none  swap  defaults 0  0 >> /mnt/etc/fstab; fi
+   if [ "${SWAP}" != "n" ]; then echo UUID=$(blkid -s UUID -o value /dev/mapper/cryptswap) swap  swap  defaults 0  0 >> /mnt/etc/fstab; fi
    if [ "$(lsblk -d -o name,rota | grep $DISKNAME | grep 1 | wc -l)" -eq 1 ]; then
-      echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /home/$(echo $USER)/.snapshots btrfs rw,relatime,compress=lzo,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,autodefrag,space_cache=v2,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,autodefrag,space_cache=v2,subvol=/_active/tmp  0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,autodefrag,space_cache=v2,subvol=/_active/homevol   0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /home/$(echo $USER)/.snapshots btrfs rw,relatime,compress=lzo,autodefrag,space_cache=v2,subvol=/_snapshots 0  0 >> /mnt/etc/fstab
    else
-      echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/tmp  0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_active/homevol   0  0 >> /mnt/etc/fstab
-      echo UUID=$UUID2 /home/$(echo $USER)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache,subvol=_snapshots 0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache=v2,subvol=/_active/rootvol   0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /tmp  btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache=v2,subvol=/_active/tmp  0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /home btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache=v2,subvol=/_active/homevol   0  0 >> /mnt/etc/fstab
+      echo UUID=$UUID2 /home/$(echo $USER)/.snapshots btrfs rw,relatime,compress=lzo,ssd,discard,autodefrag,space_cache=v2,subvol=/_snapshots 0  0 >> /mnt/etc/fstab
    fi
 }
 
-install_distro ()
+encryption_key ()
 {
-   curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/$(echo $DISTRO).sh | sh -s $BOOTTYPE $PASS $USER $DISKNAME $(echo $DISKNAME2)2 || \
+   mkdir -m 0700 /mnt/etc/keys && \
+   dd if=/dev/urandom bs=1 count=64 of=/mnt/etc/keys/keyfile.bin conv=excl,fsync iflag=fullblock && \
+   chmod 600 /mnt/etc/keys/keyfile.bin && \
+   echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$ROOTNAME /etc/keys/keyfile.bin || \
    return 1
+   if [ "${SWAP}" != "n" ]; then echo "$PASS" | arch-chroot /mnt cryptsetup luksAddKey /dev/$(echo $DISKNAME2)3 /etc/keys/keyfile.bin; fi
+}
+
+enable_network ()
+{
+   if arch-chroot /mnt readlink /sbin/init | grep systemd >/dev/null; then
+      arch-chroot /mnt systemctl enable NetworkManager || \
+      return 1
+   else
+      ln -sf /etc/sv/dbus /mnt/etc/runit/runsvdir/default/ && \
+      ln -sf /etc/sv/NetworkManager /mnt/etc/runit/runsvdir/default/ || \
+      return 1
+   fi
 }
 
 set_time ()
@@ -210,10 +197,8 @@ clean_up ()
    pacman -Q | awk '{print $1}' > post.txt
    [ "$(diff pre.txt post.txt | wc -l)" -gt 0 ] && pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1
    rm pre.txt post.txt && \
-   mv /usr/share/right /usr/share/zoneinfo/right && \
-   mv /usr/share/posix /usr/share/zoneinfo/posix && \
-   umount /mnt/boot && \
-   umount -A /dev/mapper/cryptroot && \
+   umount -l /mnt/boot && \
+   umount -Al /dev/mapper/cryptroot && \
    cryptsetup close /dev/mapper/cryptroot || \
    return 1
 }
@@ -227,7 +212,11 @@ check_error ()
 }
 
 pre_checks
+
+[ -z "$1" ] && wget -O prompts.sh https://raw.github.com/EmperorPenguin18/linux-installer/main/prompts.sh || wget -O prompts.sh "$1"
+source ./prompts.sh
 user_prompts
+
 echo "-------------------------------------------------"
 echo "                Partitioning disk                "
 echo "-------------------------------------------------"
@@ -248,8 +237,28 @@ check_error "Generate fstab failed"
 echo "-------------------------------------------------"
 echo "                Installing distro                "
 echo "-------------------------------------------------"
-install_distro
-check_error "Install distro failed"
+
+wget -O $(echo $DISTRO).sh https://raw.github.com/EmperorPenguin18/linux-installer/main/distros/$(echo $DISTRO).sh
+source ./$(echo $DISTRO).sh
+print_logo
+check_error "Print logo failed"
+install_packages
+check_error "Install packages failed"
+set_locale
+check_error "Set locale failed"
+encryption_key
+check_error "Encryption key failed"
+create_user
+check_error "Create user failed"
+set_initramfs
+check_error "Set initramfs failed"
+enable_network
+check_error "Enable network failed"
+create_bootloader
+check_error "Create bootloader failed"
+distro_clean
+check_error "Distro clean failed"
+
 echo "-------------------------------------------------"
 echo "                  Finishing up                   "
 echo "-------------------------------------------------"
