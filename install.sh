@@ -195,8 +195,8 @@ clean_up ()
    pacman -Q | awk '{print $1}' > post.txt
    [ "$(diff pre.txt post.txt | wc -l)" -gt 0 ] && pacman -R $(diff pre.txt post.txt | grep ">" | awk '{print $2}') --noconfirm >/dev/null 2>&1
    rm pre.txt post.txt && \
-   umount /mnt/boot && \
-   umount -A /dev/mapper/cryptroot && \
+   umount -l /mnt/boot && \
+   umount -Al /dev/mapper/cryptroot && \
    cryptsetup close /dev/mapper/cryptroot || \
    return 1
 }
