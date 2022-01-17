@@ -60,19 +60,21 @@ install_packages ()
   arch-chroot /mnt zypper -n ar -f http://download.opensuse.org/update/tumbleweed/ update && \
   arch-chroot /mnt zypper -n --gpg-auto-import-keys in --replacefiles --allow-vendor-change filesystem coreutils gawk kernel-default busybox-adduser glibc-locale $GRUB os-prober ucode-$CPU btrfsprogs dosfstools cryptsetup sudo NetworkManager fish $VIRTUAL && \
   arch-chroot /mnt zypper -n ar -f https://download.opensuse.org/repositories/openSUSE:Factory/standard/ factory && \
-  echo '#!/bin/sh' > temp.sh && \
-  echo 'arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper' >> temp.sh && \
+  printf '#!/bin/sh
+arch-chroot /mnt zypper in --replacefiles --allow-vendor-change rpm-config-SUSE rpm libsolv-tools libzypp zypper > /dev/null' > temp.sh && \
   chmod +x temp.sh && \
-  expect 'set timeout -1
+  printf 'set timeout 50
 spawn ./temp.sh
-expect ".*Choose from above solutions by number or skip, retry or cancel \[1/2/3/s/r/c/d/?\] (c): "
+expect "filler"
 send -- "3\r"
-expect ".*Choose from above solutions by number or skip, retry or cancel \[1/2/3/s/r/c/d/?\] (c): "
+expect "filler2"
 send -- "3\r"
-expect ".*Continue? \[y/n/v/...? shows all options\] (y): "
+expect "filler3"
 send -- "\r"
-expect eof' && \
-  rm temp.sh && \
+expect eof' > script.exp && \
+  chmod +x script.exp && \
+  ./script.exp && \
+  rm temp.sh script.exp && \
   arch-chroot /mnt zypper -n rr factory || \
   return 1
   [ -f /etc/yum.repos.d/fedora.repo.bak ] && mv /etc/yum.repos.d/fedora.repo.bak /etc/yum.repos.d/fedora.repo
