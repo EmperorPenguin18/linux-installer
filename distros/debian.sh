@@ -49,7 +49,7 @@ install_packages ()
    fi
    pacman -S debootstrap debian-archive-keyring --noconfirm && \
    debootstrap --arch amd64 stable /mnt http://deb.debian.org/debian && \
-   sed -i '$s|^|DEBIAN_FRONTEND=noninteractive PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
+   sed -i 's|SHELL|DEBIAN_FRONTEND=noninteractive PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin SHELL|g' /usr/bin/arch-chroot && \
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales && \
    set_locale && \
    sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \

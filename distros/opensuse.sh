@@ -82,7 +82,7 @@ expect eof' > script.exp && \
 
 set_locale ()
 {
-  sed -i '$s|^|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin |' /usr/bin/arch-chroot && \
+   sed -i 's|SHELL|PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin SHELL|g' /usr/bin/arch-chroot && \
   arch-chroot /mnt zypper -n aloc en_US || \
   return 1
 }
