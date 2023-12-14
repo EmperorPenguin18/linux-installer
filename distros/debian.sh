@@ -52,12 +52,11 @@ install_packages ()
    sed -i 's|SHELL|DEBIAN_FRONTEND=noninteractive PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin SHELL|g' /usr/bin/arch-chroot && \
    arch-chroot /mnt apt update && arch-chroot /mnt apt install -y gnupg locales && \
    set_locale && \
-   sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free/' -i /mnt/etc/apt/sources.list && \
-   echo 'deb http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-kernel.list && \
-   curl -s https://dl.xanmod.org/gpg.key | arch-chroot /mnt gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/xanmod.gpg --import && \
-   chmod 644 /mnt/etc/apt/trusted.gpg.d/xanmod.gpg && \
+   sed -e '/#/d' -i /mnt/etc/apt/sources.list && sed -e 's/main/main contrib non-free non-free-firmware/' -i /mnt/etc/apt/sources.list && \
+   curl -s https://dl.xanmod.org/archive.key | arch-chroot /mnt gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg && \
+   echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | tee /mnt/etc/apt/sources.list.d/xanmod-release.list && \
    arch-chroot /mnt apt update && \
-   arch-chroot /mnt apt install -y linux-xanmod-edge firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
+   arch-chroot /mnt apt install -y linux-xanmod-edge-x64v4 firmware-linux $GRUB btrfs-progs dosfstools $(echo $CPU)-microcode network-manager git cryptsetup sudo fish && \
    arch-chroot /mnt apt purge -y nano vim-common && \
    arch-chroot /mnt apt upgrade -y && \
    arch-chroot /mnt dpkg-reconfigure $(arch-chroot /mnt dpkg-query -l | grep linux-image | awk '{print $2}') $GRUB || \

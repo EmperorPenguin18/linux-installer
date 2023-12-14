@@ -30,7 +30,7 @@ curl -sL https://raw.github.com/EmperorPenguin18/linux-installer/main/install.sh
 
 ### Future:
 - Support ARM processors (single-board computers, new macbooks)
-- Add Gentoo, bedrock, alpine, and exherbo, freebsd, guix
+- Add Gentoo, bedrock, nixos, freebsd, alpine, and exherbo, guix
 - Remove bash (replace with dash for scripts and fish for users)
 
 ### Known issues:
